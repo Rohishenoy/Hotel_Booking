@@ -1,18 +1,60 @@
-
-import React from 'react'
-import Paper from '@mui/material/Paper'
-import Button from '@mui/material/Button'
-import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
-import Box from '@mui/material/Box'
-import Divider from '@mui/material/Divider'
-import PersonIcon from '@mui/icons-material/Person'
-import EmailIcon from '@mui/icons-material/Email'
-import LockIcon from '@mui/icons-material/Lock'
-import PhoneIcon from '@mui/icons-material/Phone'
-import HomeIcon from '@mui/icons-material/Home'
+import React, { useState } from 'react'
+import {
+  Box,
+  Button,
+  Paper,
+  TextField,
+  Typography,
+  Divider
+} from '@mui/material'
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
+import { host } from '../Context/Host'
 
 export default function Register() {
+  const navigate = useNavigate()
+
+  const [register, setRegister] = useState({
+    uname: '',
+    uemail: '',
+    upassword: '',
+    uphone: '',
+    uaddress: '',
+    uimage: ''
+  })
+
+  const HandleChange = (e) => {
+    if (e.target.name === 'uimage') {
+      setRegister({ ...register, uimage: e.target.files[0] })
+    } else {
+      setRegister({ ...register, [e.target.name]: e.target.value })
+    }
+  }
+
+  const HandleSubmit = () => {
+    const data = new FormData()
+    data.append('uname', register.uname)
+    data.append('uemail', register.uemail)
+    data.append('upassword', register.upassword)
+    data.append('uphone', register.uphone)
+    data.append('uaddress', register.uaddress)
+    if (register.uimage) {
+      data.append('uimage', register.uimage)
+    }
+
+    axios.post(`${host}/User/AddUser`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+      .then((res) => {
+        alert(res.data.message)
+        navigate('/Login')
+      })
+      .catch((error) => {
+        console.log(error)
+        alert(error.response?.data?.message || 'Registration failed')
+      })
+  }
+
   return (
     <Box
       sx={{
@@ -20,202 +62,87 @@ export default function Register() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-
-        backgroundImage:
-          'url("https://images.unsplash.com/photo-1566073771259-6a8506099945")',
+        backgroundImage: 'url("https://images.unsplash.com/photo-1566073771259-6a8506099945")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-
+        p: 2,
         position: 'relative',
-        padding: 2,
-
         '&::before': {
           content: '""',
           position: 'absolute',
           inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.45)',
-        },
+          backgroundColor: 'rgba(0,0,0,0.45)'
+        }
       }}
     >
-
       <Paper
         elevation={15}
         sx={{
           position: 'relative',
           zIndex: 1,
           width: '100%',
-          maxWidth: 450,
-          padding: { xs: 3, sm: 4 },
+          maxWidth: 520,
+          p: { xs: 3, sm: 4 },
           borderRadius: 4,
-
           backgroundColor: 'rgba(255,255,255,0.96)',
-
-          boxShadow: '0 20px 50px rgba(0,0,0,0.35)',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.35)'
         }}
       >
+        <Typography
+          variant="h4"
+          align="center"
+          fontWeight="bold"
+          sx={{ color: '#8B5E3C', mb: 2 }}
+        >
+          Create Account
+        </Typography>
 
-        {/* Heading */}
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
+        <Typography
+          variant="body2"
+          align="center"
+          sx={{ color: 'text.secondary', mb: 3 }}
+        >
+          Join us and enjoy your perfect stay.
+        </Typography>
 
-          <Typography
-            variant="h4"
-            fontWeight="bold"
-            sx={{
-              color: '#8B5E3C',
-              letterSpacing: 1,
-            }}
-          >
-            HOTEL MANAGEMENT
-          </Typography>
-
-          <Typography
-            variant="body1"
-            sx={{
-              color: 'gray',
-              mt: 0.5,
-            }}
-          >
-            Create your account
-          </Typography>
-
+        <Box component="form" noValidate sx={{ display: 'grid', gap: 2 }}>
+          <TextField label="Name" fullWidth name="uname" onChange={HandleChange} />
+          <TextField label="Email" fullWidth name="uemail" type="email" onChange={HandleChange} />
+          <TextField label="Password" fullWidth name="upassword" type="password" onChange={HandleChange} />
+          <TextField label="Phone" fullWidth name="uphone" type="number" onChange={HandleChange} />
+          <TextField label="Address" fullWidth name="uaddress" multiline minRows={3} onChange={HandleChange} />
+          <TextField label="Upload Image" fullWidth name="uimage" type="file" onChange={HandleChange} InputLabelProps={{ shrink: true }} />
         </Box>
 
-        <Divider sx={{ mb: 3 }} />
+        <Divider sx={{ my: 3 }} />
 
-        {/* Name */}
-        <TextField
-          label="Full Name"
-          fullWidth
-          name="uname"
-          placeholder="Enter your name"
-          sx={{ mb: 2 }}
-          InputProps={{
-            startAdornment: (
-              <PersonIcon sx={{ color: '#8B5E3C', mr: 1 }} />
-            ),
-          }}
-        />
-
-        {/* Email */}
-        <TextField
-          label="Email"
-          fullWidth
-          name="uemail"
-          type="email"
-          placeholder="Enter your email"
-          sx={{ mb: 2 }}
-          InputProps={{
-            startAdornment: (
-              <EmailIcon sx={{ color: '#8B5E3C', mr: 1 }} />
-            ),
-          }}
-        />
-
-        {/* Password */}
-        <TextField
-          label="Password"
-          fullWidth
-          name="upassword"
-          type="password"
-          placeholder="Enter your password"
-          sx={{ mb: 2 }}
-          InputProps={{
-            startAdornment: (
-              <LockIcon sx={{ color: '#8B5E3C', mr: 1 }} />
-            ),
-          }}
-        />
-
-        {/* Phone */}
-        <TextField
-          label="Phone Number"
-          fullWidth
-          name="uphone"
-          type="tel"
-          placeholder="Enter your phone number"
-          sx={{ mb: 2 }}
-          InputProps={{
-            startAdornment: (
-              <PhoneIcon sx={{ color: '#8B5E3C', mr: 1 }} />
-            ),
-          }}
-        />
-
-        {/* Address */}
-        <TextField
-          label="Address"
-          fullWidth
-          name="uaddress"
-          multiline
-          rows={2}
-          placeholder="Enter your address"
-          sx={{ mb: 3 }}
-          InputProps={{
-            startAdornment: (
-              <HomeIcon sx={{ color: '#8B5E3C', mr: 1, mt: 1 }} />
-            ),
-          }}
-        />
-
-        {/* Register Button */}
         <Button
           variant="contained"
           fullWidth
-          size="large"
+          onClick={HandleSubmit}
           sx={{
             py: 1.5,
             borderRadius: 2,
-            fontSize: '16px',
-            fontWeight: 'bold',
-            letterSpacing: 1,
-
             backgroundColor: '#8B5E3C',
-
-            '&:hover': {
-              backgroundColor: '#6F472D',
-              transform: 'translateY(-2px)',
-              boxShadow: '0 8px 20px rgba(111,71,45,0.35)',
-            },
-
-            transition: '0.3s',
+            fontWeight: 'bold',
+            '&:hover': { backgroundColor: '#6F472D' }
           }}
         >
-          REGISTER
+          Register
         </Button>
 
-        {/* Login */}
-        <Typography
-          align="center"
-          sx={{
-            mt: 3,
-            color: 'gray',
-            fontSize: 14,
-          }}
-        >
+        <Typography sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
           Already have an account?{' '}
-
           <Button
             variant="text"
-            sx={{
-              color: '#8B5E3C',
-              fontWeight: 'bold',
-              textTransform: 'none',
-              padding: 0,
-              minWidth: 'auto',
-
-              '&:hover': {
-                backgroundColor: 'transparent',
-                color: '#6F472D',
-              },
-            }}
+            onClick={() => navigate('/Login')}
+            sx={{ color: '#8B5E3C', fontWeight: 'bold', p: 0 }}
           >
             Login
           </Button>
         </Typography>
-
       </Paper>
     </Box>
   )
 }
-

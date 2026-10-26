@@ -1,0 +1,16 @@
+.location_book {
+  width: 100%;
+  height: 45px;
+  padding: 0 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #fff;
+  color: #555;
+  font-size: 15px;
+  outline: none;
+  cursor: pointer;
+}
+
+.location_book:focus {
+  border-color: #ff5a5f;
+}

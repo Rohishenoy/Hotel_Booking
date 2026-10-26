@@ -5,11 +5,7 @@ export default function Gallery() {
   return (
     <div>
       <div>
-  {/* loader  */}
-  <div className="loader_bg">
-    <div className="loader"><img src="images/loading.gif" alt="#" /></div>
-  </div>
-  {/* end loader */}
+ 
  
   <div className="back_re">
     <div className="container">
@@ -31,7 +27,7 @@ export default function Gallery() {
             <figure><img src="images/gallery1.jpg" alt="#" /></figure>
           </div>
         </div>
-        <div className="col-md-3 col-sm-6">
+        <div className="col-md-3 col-sm-6" >
           <div className="gallery_img">
             <figure><img src="images/gallery2.jpg" alt="#" /></figure>
           </div>

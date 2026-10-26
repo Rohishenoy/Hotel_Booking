@@ -1,14 +1,10 @@
 import React from 'react'
-
+import { Typography,Paper,Grid } from '@mui/material'
 export default function Contact() {
   return (
     <div>
        <div>
-  {/* loader  */}
-  <div className="loader_bg">
-    <div className="loader"><img src="images/loading.gif" alt="#" /></div>
-  </div>
-  {/* end loader */}
+
 
   <div className="back_re">
     <div className="container">
@@ -44,6 +40,38 @@ export default function Contact() {
                 <button className="send_btn">Send</button>
               </div>
             </div>
+              {/* Contact information */}
+        <Grid item xs={12} md={6}>
+
+          <Paper sx={{ padding: 4, height: "100%" }}>
+
+            <Typography
+              variant="h5"
+              color="#8B5E3C"
+              fontWeight="bold"
+            >
+              Hotel Stay
+            </Typography>
+
+            <Typography sx={{ mt: 3 }}>
+              📍 Address: Mangalore, Karnataka, India
+            </Typography>
+
+            <Typography sx={{ mt: 2 }}>
+              📞 Phone: +91 98765 43210
+            </Typography>
+
+            <Typography sx={{ mt: 2 }}>
+              ✉ Email: hotelstay@gmail.com
+            </Typography>
+
+            <Typography sx={{ mt: 2 }}>
+              🕐 Open 24 hours
+            </Typography>
+
+          </Paper>
+
+        </Grid>
           </form>
         </div>
         <div className="col-md-6">

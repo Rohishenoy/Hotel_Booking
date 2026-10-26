@@ -4,11 +4,7 @@ export default function Blog() {
   return (
     <div>
       <div>
-  {/* loader  */}
-  <div className="loader_bg">
-    <div className="loader"><img src="images/loading.gif" alt="#" /></div>
-  </div>
-  {/* end loader */}
+ 
  
   <div className="back_re">
     <div className="container">

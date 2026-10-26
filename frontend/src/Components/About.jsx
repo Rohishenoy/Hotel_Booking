@@ -20,10 +20,6 @@ export default function About() {
 return (
 <Box sx={{ backgroundColor: '#faf8f5' }}>
 
-    {/* ================= HERO SECTION ================= */}
-  
-
-
     {/* ================= ABOUT HOTEL ================= */}
     <Container maxWidth="lg" sx={{ py: { xs: 6, md: 9 } }}>
 
@@ -36,13 +32,11 @@ return (
                 position: 'relative',
               }}>
 
-                    <Box component="img" src="https://images.unsplash.com/photo-1564501049412-61c2a3083791"
-                        alt="Luxury Hotel" sx={{
+                    <Box component="img" src="https://images.unsplash.com/photo-1564501049412-61c2a3083791"alt="Luxury Hotel" sx={{
                   width: '100%',
                   height: { xs: 300, md: 430 },
                   objectFit: 'cover',
                   borderRadius: 4,
-
                   boxShadow:
                     '0 15px 40px rgba(0,0,0,0.2)',
                 }} />
@@ -52,54 +46,33 @@ return (
                   position: 'absolute',
                   bottom: -20,
                   right: { xs: 10, md: -20 },
-
                   backgroundColor: '#8B5E3C',
                   color: 'white',
-
                   px: 3,
                   py: 2,
-
                   borderRadius: 3,
                   textAlign: 'center',
                 }}>
-                        <Typography variant="h4" fontWeight="bold">
-                            15+
-                        </Typography>
+                        <Typography variant="h4" fontWeight="bold">15</Typography>
 
-                        <Typography variant="body2">
-                            Years of Hospitality
-                        </Typography>
+                        <Typography variant="body2"> Years of Hospitality</Typography>
                     </Paper>
-
                 </Box>
-
             </Grid>
 
 
             {/* Content */}
             <Grid size={{ xs: 12, md: 6 }}>
-
                 <Typography variant="overline" sx={{
                 color: '#8B5E3C',
                 fontWeight: 'bold',
                 letterSpacing: 2,
-              }}>
-                    WELCOME TO OUR HOTEL
+              }}>WELCOME TO OUR HOTEL
                 </Typography>
 
-                <Typography variant="h3" fontWeight="bold" sx={{
-                color: '#3d2b1f',
-                mb: 2,
-                fontSize: { xs: 32, md: 42 },
-              }}>
-                    Your Comfort Is Our Priority
-                </Typography>
+                <Typography variant="h3" fontWeight="bold" sx={{color: '#3d2b1f',mb: 2,fontSize: { xs: 32, md: 42 },}}> Your Comfort Is Our Priority</Typography>
 
-                <Typography variant="body1" sx={{
-                color: '#666',
-                lineHeight: 1.9,
-                mb: 2,
-              }}>
+                <Typography variant="body1" sx={{color: '#666', lineHeight: 1.9, mb: 2, }}>
                     Welcome to our Hotel Management platform, where
                     comfort meets quality service. We are committed to
                     providing our guests with a memorable and relaxing

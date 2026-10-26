@@ -1,5 +1,4 @@
-
-import React from 'react'
+import React, { useState } from 'react'
 import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
@@ -7,11 +6,104 @@ import TextField from '@mui/material/TextField'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 
+import { useLocation, useNavigate } from 'react-router-dom'
 import EmailIcon from '@mui/icons-material/Email'
 import LockIcon from '@mui/icons-material/Lock'
 
+import axios from 'axios'
+import { host } from '../Context/Host'
+
 export default function Login() {
+
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const [login, setLogin] = useState({
+    uemail: '',
+    upassword: ''
+  })
+
+  const handlechange = (event) => {
+    console.log({
+      ...login,
+      [event.target.name]: event.target.value
+    })
+
+    setLogin({
+      ...login,
+      [event.target.name]: event.target.value
+    })
+  }
+
+
+const HandleLogin = () => {
+
+    console.log("login details", login);
+
+    axios.post(`${host}/User/Login`, login)
+
+        .then((res) => {
+
+            console.log("Login response:", res.data);
+
+            if (res.data.success) {
+
+                // Save token
+                localStorage.setItem(
+                    "UserToken-1",
+                    JSON.stringify(res.data.token)
+                );
+
+
+                // Save User ID
+                localStorage.setItem(
+                    "UserId",
+                    res.data.user._id
+                );
+
+
+                console.log(
+                    "UserId:",
+                    res.data.user._id
+                );
+
+
+                alert(res.data.message);
+
+
+                const returnTo = location.state?.returnTo
+                navigate(returnTo?.pathname || "/Home", {
+                    state: returnTo?.state
+                });
+
+            } else {
+
+                alert(res.data.message);
+
+            }
+
+        })
+
+        .catch((error) => {
+
+            console.log(error);
+
+            alert(
+                error.response?.data?.message ||
+                "Login failed"
+            );
+
+        });
+};
+
+
+
+  const HandleRegister = () => {
+    navigate('/register')
+  }
+
   return (
+
     <Box
       sx={{
         minHeight: '100vh',
@@ -29,7 +121,6 @@ export default function Login() {
         position: 'relative',
         padding: 2,
 
-        // Dark overlay
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -40,6 +131,7 @@ export default function Login() {
     >
 
       {/* Login Card */}
+
       <Paper
         elevation={15}
         sx={{
@@ -49,23 +141,30 @@ export default function Login() {
           width: '100%',
           maxWidth: 450,
 
-          padding: { xs: 3, sm: 4 },
+          padding: {
+            xs: 3,
+            sm: 4
+          },
 
           borderRadius: 4,
 
-          backgroundColor: 'rgba(255,255,255,0.96)',
+          backgroundColor:
+            'rgba(255,255,255,0.96)',
 
-          boxShadow: '0 20px 50px rgba(0,0,0,0.35)',
+          boxShadow:
+            '0 20px 50px rgba(0,0,0,0.35)',
         }}
       >
 
         {/* Heading */}
+
         <Box
           sx={{
             textAlign: 'center',
             mb: 3,
           }}
         >
+
           <Typography
             variant="h4"
             fontWeight="bold"
@@ -86,18 +185,23 @@ export default function Login() {
           >
             Welcome Back
           </Typography>
+
         </Box>
 
         <Divider sx={{ mb: 3 }} />
 
         {/* Email */}
+
         <TextField
           label="Email"
           fullWidth
           name="uemail"
           type="email"
           placeholder="Enter your email"
+          value={login.uemail}
+          onChange={handlechange}
           sx={{ mb: 2 }}
+
           InputProps={{
             startAdornment: (
               <EmailIcon
@@ -111,13 +215,17 @@ export default function Login() {
         />
 
         {/* Password */}
+
         <TextField
           label="Password"
           fullWidth
           name="upassword"
           type="password"
           placeholder="Enter your password"
+          value={login.upassword}
+          onChange={handlechange}
           sx={{ mb: 1 }}
+
           InputProps={{
             startAdornment: (
               <LockIcon
@@ -131,6 +239,7 @@ export default function Login() {
         />
 
         {/* Forgot Password */}
+
         <Box
           sx={{
             display: 'flex',
@@ -138,6 +247,7 @@ export default function Login() {
             mb: 3,
           }}
         >
+
           <Button
             variant="text"
             sx={{
@@ -154,13 +264,16 @@ export default function Login() {
           >
             Forgot Password?
           </Button>
+
         </Box>
 
         {/* Login Button */}
+
         <Button
           variant="contained"
           fullWidth
           size="large"
+          onClick={HandleLogin}
           sx={{
             py: 1.5,
 
@@ -188,6 +301,7 @@ export default function Login() {
         </Button>
 
         {/* Register */}
+
         <Typography
           align="center"
           sx={{
@@ -200,6 +314,7 @@ export default function Login() {
 
           <Button
             variant="text"
+            onClick={HandleRegister}
             sx={{
               color: '#8B5E3C',
               fontWeight: 'bold',
@@ -215,10 +330,11 @@ export default function Login() {
           >
             Register
           </Button>
+
         </Typography>
 
       </Paper>
+
     </Box>
   )
 }
-
