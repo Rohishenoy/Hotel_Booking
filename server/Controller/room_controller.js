@@ -7,27 +7,31 @@ export const AddRoom = async (req, res) => {
 
         const {
             hotel,
+            roomnumber,
             roomtype,
             price,
             capacity,
             description,
-            image
+            image,
+            status
         } = req.body;
 
-        if (!hotel || !roomtype || !price) {
+        if (!hotel || !roomnumber || !roomtype || !price) {
             return res.status(400).json({
                 success: false,
-                message: "Hotel, room type and price are required"
+                message: "Hotel, room number, room type and price are required"
             });
         }
 
         const room = new roommodel({
             hotel,
+            roomnumber,
             roomtype,
             price,
             capacity,
             description,
-            image
+            image,
+            status: status || "available"
         });
 
         const savedRoom = await room.save();
@@ -53,14 +57,28 @@ export const AddRoom = async (req, res) => {
 // VIEW ALL ROOMS
 export const ViewRoom = async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const skip = (page - 1) * limit;
 
-        const rooms = await roommodel
-            .find()
-            .populate("hotel");
+        const [rooms, totalroom] = await Promise.all([
+            roommodel
+                .find()
+                .populate("hotel")
+                .skip(skip)
+                .limit(limit),
+            roommodel.countDocuments()
+        ]);
+
+        const totalpages = Math.ceil(totalroom / limit) || 1;
 
         return res.status(200).json({
             success: true,
-            rooms
+            allroom: rooms,
+            currentpage: page,
+            totalroom,
+            totalpages,
+            limit
         });
 
     } catch (error) {
@@ -145,7 +163,11 @@ export const UpdateRoom = async (req, res) => {
         const updatedRoom =
             await roommodel.findByIdAndUpdate(
                 rid,
-                req.body,
+                {
+                    ...req.body,
+                    roomnumber: req.body.roomnumber || undefined,
+                    status: req.body.status || "available"
+                },
                 { new: true }
             );
 

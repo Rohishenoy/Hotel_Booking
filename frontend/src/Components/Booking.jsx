@@ -6,6 +6,17 @@ export default function Booking() {
   const location = useLocation();
   const navigate = useNavigate();
   const booking = location.state;
+  const bookingStatus = booking?.bookingStatus || "pending";
+
+  const statusConfig = {
+    pending: { label: "Booking Pending", color: "#f5e6da", textColor: "#8B5E3C" },
+    approved: { label: "Booking Confirmed", color: "#e6f4ea", textColor: "#1b5e20" },
+    rejected: { label: "Booking Rejected", color: "#fdecea", textColor: "#b3261e" },
+    cancelled: { label: "Booking Cancelled", color: "#f3f3f3", textColor: "#5f6368" }
+  };
+
+  const currentStatus = statusConfig[bookingStatus] || statusConfig.pending;
+
   // No booking
   if (!booking) {
 
@@ -15,7 +26,7 @@ export default function Booking() {
         <Paper elevation={8}sx={{maxWidth: 450,margin: "auto",padding: 5,textAlign: "center",borderRadius: 4 }}>
         <Typography variant="h5"fontWeight="bold"color="#8B5E3C"mb={3}> No Booking Found</Typography>
 
-          <Button variant="contained"onClick={() => navigate("/home")}sx={{backgroundColor: "#8B5E3C",px: 5,borderRadius: 2,"&:hover": {backgroundColor: "#6F472D"}}}>
+          <Button variant="contained"onClick={() => navigate("/")}sx={{backgroundColor: "#8B5E3C",px: 5,borderRadius: 2,"&:hover": {backgroundColor: "#6F472D"}}}>
     Go to Home</Button>
 </Paper>
 </Container>
@@ -39,10 +50,10 @@ export default function Booking() {
             <Typography variant="h6"fontWeight="bold" > Your Reservation</Typography>
 
 
-            <Chip label="Booking Pending"
+            <Chip label={currentStatus.label}
               sx={{
-                backgroundColor: "#f5e6da",
-                color: "#8B5E3C",
+                backgroundColor: currentStatus.color,
+                color: currentStatus.textColor,
                 fontWeight: "bold"
               }}
             />
@@ -222,10 +233,10 @@ export default function Booking() {
 
           {/* Buttons */}
 
-          <Button fullWidth variant="contained" onClick={() =>navigate("/payment",{ state: booking})}
+          <Button fullWidth variant="contained" onClick={() =>navigate("/Payment",{ state: booking})}
           sx={{mt: 4,py: 1.5,borderRadius: 2,fontSize: "16px",fontWeight: "bold",backgroundColor:"#8B5E3C","&:hover":{backgroundColor:"#6F472D"}}}> Continue to Payment
           </Button>
-          <Button fullWidth variant="outlined"  onClick={() => navigate("/home")}
+          <Button fullWidth variant="outlined"  onClick={() => navigate("/")}
             sx={{ mt: 1.5, py: 1.3, borderRadius: 2, color: "#8B5E3C", borderColor: "#8B5E3C", "&:hover": {  borderColor: "#6F472D",backgroundColor: "#faf7f4"  } }}>
             Back to Home
           </Button>

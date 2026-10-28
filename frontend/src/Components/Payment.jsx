@@ -62,7 +62,7 @@ const handlePayment = async () => {
 
     if (!userId) {
         alert("Please login first");
-        navigate("/login");
+        navigate("/Login");
         return;
     }
 
@@ -83,7 +83,7 @@ const handlePayment = async () => {
 
         if (res.data.success) {
             alert("Payment successful!");
-            navigate("/home");
+            navigate("/MyBookings", { replace: true });
         }
 
     } catch (error) {
@@ -122,7 +122,7 @@ const handlePayment = async () => {
 
           <Button
             variant="contained"
-            onClick={() => navigate("/home")}
+            onClick={() => navigate("/")}
             sx={{
               backgroundColor: "#8B5E3C",
               px: 5,
@@ -427,7 +427,7 @@ const handlePayment = async () => {
             >
 
               <FormControlLabel
-                value="Cash"
+                value="COD"
                 control={<Radio />}
                 label="Cash on Arrival"
                 sx={{
@@ -504,7 +504,7 @@ const handlePayment = async () => {
             </Box>
           )}
           {/* Cash */}
-          {method === "Cash" && (
+          {method === "COD" && (
             <Paper elevation={0} sx={{ mt: 3, p: 2, backgroundColor: "#faf7f4",borderRadius: 2}}>
               <Typography> You can pay the amount at thehotel during arrival.</Typography>
             </Paper>
@@ -512,7 +512,7 @@ const handlePayment = async () => {
           {/* Payment status */}
           {method && (
             <Box sx={{ mt: 3 }}>
-              <Chip label={ method === "Cash"? "Pay at Hotel" : "Secure Payment" }sx={{color: "#8B5E3C",borderColor: "#8B5E3C"}} variant="outlined"/>
+              <Chip label={ method === "COD"? "Pay at Hotel" : "Secure Payment" }sx={{color: "#8B5E3C",borderColor: "#8B5E3C"}} variant="outlined"/>
             </Box>
           )}
           {/* Pay Button */}

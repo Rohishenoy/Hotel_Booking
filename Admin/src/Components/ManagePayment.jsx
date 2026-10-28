@@ -150,11 +150,11 @@ export default function ManagePayment() {
                                 </TableCell>
 
                                 <TableCell>
-                                    {payment.method}
+                                    {payment.paymentMethod || "-"}
                                 </TableCell>
 
                                 <TableCell>
-                                    {payment.status}
+                                    {payment.paymentStatus || "-"}
                                 </TableCell>
 
                                 <TableCell>

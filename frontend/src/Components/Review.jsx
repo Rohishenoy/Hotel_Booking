@@ -1,8 +1,10 @@
 
 import React, { useState } from "react";
 import axios from "axios";
+import { useSearchParams } from "react-router-dom";
 
 import {
+    Alert,
     Container,
     Typography,
     TextField,
@@ -12,37 +14,37 @@ import {
 
 import { host } from "../Context/Host";
 
-export default function Review({ hotelId }) {
+export default function Review({ hotelId: providedHotelId }) {
+    const [searchParams] = useSearchParams();
+    const hotelId = providedHotelId || searchParams.get("hotelId");
+    const hotelName = searchParams.get("hotelName");
 
     const [rating, setRating] = useState(0);
-
     const [review, setReview] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
 
-
-    const SubmitReview = async () => {
-
+    const submitReview = async () => {
+        setError("");
+        setSuccess("");
+        if (!hotelId) {
+            setError("Choose a hotel from your confirmed bookings before writing a review.");
+            return;
+        }
         try {
-
             const userId =
                 localStorage.getItem("UserId");
-
-
             if (!userId) {
-
-                alert("Please login first");
-
+                setError("Please log in first.");
                 return;
             }
-
-
             if (rating === 0) {
-
-                alert("Please select rating");
-
+                setError("Please select a rating.");
                 return;
             }
 
-
+            setSubmitting(true);
             const res = await axios.post(
                 `${host}/Review/AddReview`,
                 {
@@ -53,38 +55,34 @@ export default function Review({ hotelId }) {
                 }
             );
 
-
             if (res.data.success) {
-
-                alert("Review added successfully");
-
+                setSuccess("Your review was submitted successfully.");
                 setRating(0);
-
                 setReview("");
-
             }
-
         } catch (error) {
-
             console.log(error);
-
-            alert(
+            setError(
                 error.response?.data?.message ||
                 "Failed to add review"
             );
+        } finally {
+            setSubmitting(false);
         }
     };
 
-
     return (
-
         <Container sx={{ mt: 5 }}>
-
             <Typography variant="h5">
-                Give Your Rating
+                Review {hotelName || "Your Hotel"}
             </Typography>
-
-
+            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+            {success && <Alert severity="success" sx={{ mt: 2 }}>{success}</Alert>}
+            {!hotelId && (
+                <Alert severity="info" sx={{ mt: 2 }}>
+                    Open this form from an approved booking in My Bookings.
+                </Alert>
+            )}
             <Rating
                 value={rating}
                 onChange={(event, newValue) => {
@@ -111,13 +109,12 @@ export default function Review({ hotelId }) {
 
             <Button
                 variant="contained"
-                onClick={SubmitReview}
+                onClick={submitReview}
+                disabled={submitting || !hotelId}
                 sx={{ mt: 2 }}
             >
-                Submit Review
+                {submitting ? "Submitting..." : "Submit Review"}
             </Button>
-
         </Container>
     );
 }
-

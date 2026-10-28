@@ -11,7 +11,8 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Paper
+    Paper,
+    Rating
 } from "@mui/material";
 import { host } from "../Context/Host";
 
@@ -130,27 +131,30 @@ export default function ManageReview() {
 
                     <TableBody>
 
-                        {reviews.map((review) => (
+                        {reviews.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={6} align="center">
+                                    No reviews have been submitted yet.
+                                </TableCell>
+                            </TableRow>
+                        ) : reviews.map((review) => (
 
                             <TableRow key={review._id}>
 
                                 <TableCell>
-                                    {review.user?.uname ||
-                                        review.user?.name ||
-                                        review.user}
+                                    {review.user?.name || review.user?.email || "-"}
                                 </TableCell>
 
                                 <TableCell>
-                                    {review.hotel?.hotelname ||
-                                        review.hotel}
+                                    {review.hotel?.hotelname || "-"}
                                 </TableCell>
 
                                 <TableCell>
-                                    {review.rating} / 5
+                                    <Rating value={Number(review.rating) || 0} readOnly size="small" />
                                 </TableCell>
 
                                 <TableCell>
-                                    {review.review}
+                                    {review.review || "No written comment"}
                                 </TableCell>
 
                                 <TableCell>

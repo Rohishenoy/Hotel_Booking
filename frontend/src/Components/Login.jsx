@@ -72,7 +72,7 @@ const HandleLogin = () => {
 
 
                 const returnTo = location.state?.returnTo
-                navigate(returnTo?.pathname || "/Home", {
+                navigate(returnTo?.pathname || "/", {
                     state: returnTo?.state
                 });
 

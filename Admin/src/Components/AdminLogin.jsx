@@ -32,7 +32,7 @@ const navigate= useNavigate()
       .then((res) => {
         console.log(res)
         alert(res.data.message)
-        navigate('/')
+        navigate('/admindashboard')
         localStorage.setItem('AdminToken1', res.data.token)
       })
       .catch((error) => {

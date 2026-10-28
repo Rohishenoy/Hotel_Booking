@@ -1,8 +1,21 @@
+import { useContext } from 'react'
 import adminAvatar from '../assets/images/avatar/avatar.jpg'
-import { Link } from 'react-router-dom'
+import { DataContainer } from '../Context/MyContext'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function Header() {
 
+  const Navigate=useNavigate()
+  const{theme,setTheme}=useContext(DataContainer)
+ const handlelogout = () => {
+  const confirmSignout = window.confirm("Are you sure you want to logout?");
+
+  if (confirmSignout) {
+    localStorage.removeItem("admin-token");
+    alert("Logout successful");
+    Navigate("/Adminlogin");
+  }
+};
   return (
     <div >
       <nav className="navbar admin-navbar navbar-expand bg-white">
@@ -16,7 +29,10 @@ export default function Header() {
           <input className="form-control search-input" type="search" placeholder="Search users, orders, reports" aria-label="Search" />
         </form>
         <div className="navbar-actions ms-auto">
-        
+         <button className="icon-button theme-toggle" onClick={()=>setTheme(theme ==='dark'? 'light':'dark')} type="button" data-theme-toggle aria-label="Switch color theme" title="Switch color theme">
+            {/* <i className="bi bi-moon-stars" data-theme-icon aria-hidden="true" /> */}
+            <i className={theme === 'dark'?'bi bi-moon-stars': 'bi bi-sun'}></i>
+          </button>
           <div className="dropdown">
             <button className="icon-button" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
               <span className="notification-dot" />
@@ -46,6 +62,7 @@ export default function Header() {
             <ul className="dropdown-menu dropdown-menu-end">
               <li><Link className="dropdown-item" to="/ManageUser">Manage users</Link></li>
               <li><Link className="dropdown-item" to="/ManageHotel">Manage hotels</Link></li>
+              <li><button className="dropdown-item" onClick={handlelogout} > Logout</button></li>
             </ul>
           </div>
         </div>

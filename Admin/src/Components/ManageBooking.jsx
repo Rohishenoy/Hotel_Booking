@@ -13,7 +13,10 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Paper
+    Paper,
+    FormControl,
+    Select,
+    MenuItem
 } from "@mui/material";
 import { host } from "../Context/Host";
 
@@ -91,6 +94,28 @@ export default function ManageBooking() {
 
         }
 
+    };
+
+    const updateBookingStatus = async (id, bookingStatus) => {
+        try {
+            const res = await axios.put(
+                `${host}/Booking/UpdateBookingStatus/${id}`,
+                { bookingStatus }
+            );
+
+            if (res.data.success) {
+                setBookings((currentBookings) =>
+                    currentBookings.map((booking) =>
+                        booking._id === id
+                            ? { ...booking, bookingStatus: res.data.booking.bookingStatus }
+                            : booking
+                    )
+                );
+            }
+        } catch (error) {
+            console.error("Booking status update failed:", error);
+            alert(error.response?.data?.message || "Unable to update booking status");
+        }
     };
 
     return (
@@ -177,7 +202,20 @@ export default function ManageBooking() {
                                 </TableCell>
 
                                 <TableCell>
-                                    {booking.bookingStatus}
+                                    <FormControl size="small" sx={{ minWidth: 130 }}>
+                                        <Select
+                                            value={booking.bookingStatus || "pending"}
+                                            onChange={(event) =>
+                                                updateBookingStatus(booking._id, event.target.value)
+                                            }
+                                            aria-label={`Booking status for ${booking._id}`}
+                                        >
+                                            <MenuItem value="pending">Pending</MenuItem>
+                                            <MenuItem value="approved">Approved</MenuItem>
+                                            <MenuItem value="rejected">Rejected</MenuItem>
+                                            <MenuItem value="cancelled">Cancelled</MenuItem>
+                                        </Select>
+                                    </FormControl>
                                 </TableCell>
 
                                 <TableCell>

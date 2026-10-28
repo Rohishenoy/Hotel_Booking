@@ -14,6 +14,16 @@ import {
 
 import { host } from "../Context/Host";
 
+const fallbackImage = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80";
+
+const getImageUrl = (image) => {
+  if (!image) return fallbackImage;
+  if (/^https?:\/\//i.test(image) || image.startsWith("data:")) {
+    return image;
+  }
+  return `${host}/image/${image}`;
+};
+
 export default function Hotels() {
 
   const location = useLocation();
@@ -113,8 +123,13 @@ export default function Hotels() {
 
               <CardMedia
                 component="img"
-                height="100"
-                image={hotel.image}
+                sx={{
+                  height: 160,
+                  width: "100%",
+                  objectFit: "contain",
+                  backgroundColor: "#f5f5f5"
+                }}
+                image={getImageUrl(hotel.image)}
                 alt={hotel.hotelname}
               />
 

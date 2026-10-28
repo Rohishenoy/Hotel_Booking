@@ -5,6 +5,16 @@ import {useParams,useLocation,useNavigate} from "react-router-dom";
 import {Container,Card,CardContent,CardMedia,Typography,Button,Grid} from "@mui/material";
 import { host } from "../Context/Host";
 
+const fallbackImage = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80";
+
+const getImageUrl = (image) => {
+  if (!image) return fallbackImage;
+  if (/^https?:\/\//i.test(image) || image.startsWith("data:")) {
+    return image;
+  }
+  return `${host}/image/${image}`;
+};
+
 export default function HotelDetails() {
 
   const { id } = useParams();
@@ -18,6 +28,7 @@ export default function HotelDetails() {
   const [bookingError, setBookingError] = useState("");
   const [bookingInProgress, setBookingInProgress] = useState(false);
 
+  const availableRooms = rooms.filter((room) => room.status === "available");
 
   useEffect(() => {
 
@@ -92,7 +103,7 @@ export default function HotelDetails() {
         throw new Error(response.data.message || "Unable to create booking");
       }
 
-      navigate("/booking", {
+      navigate("/Booking", {
         state: {
           ...response.data.booking,
           location: hotel.location?.location || bookingData?.location,
@@ -134,12 +145,17 @@ export default function HotelDetails() {
 
       {hotel && (
 
-        <Card sx={{ marginBottom: 5 }}>
+        <Card sx={{ marginBottom: 5, maxWidth: 900, mx: "auto" }}>
 
           <CardMedia
             component="img"
-            height="300"width="100"
-            image={hotel.image}
+            sx={{
+              height: { xs: 180, sm: 220 },
+              width: "100%",
+              objectFit: "contain",
+              backgroundColor: "#f5f5f5"
+            }}
+            image={getImageUrl(hotel.image)}
             alt={hotel.hotelname}
           />
 
@@ -183,16 +199,15 @@ export default function HotelDetails() {
         marginBottom={3}
         fontWeight="bold"
       >
-        Available Rooms
+        Room Availability
       </Typography>
-
 
       <Grid container spacing={3}>
 
-        {rooms
-          .filter((room) => room.status === "available")
-          .map((room) => (
+        {rooms.map((room) => {
+          const isAvailable = room.status === "available";
 
+          return (
             <Grid
               item
               xs={12}
@@ -205,8 +220,13 @@ export default function HotelDetails() {
 
                 <CardMedia
                   component="img"
-                  height="200"width={100}
-                  image={room.image}
+                  sx={{
+                    height: 160,
+                    width: "100%",
+                    objectFit: "contain",
+                    backgroundColor: "#f5f5f5"
+                  }}
+                  image={getImageUrl(room.image)}
                   alt={room.roomtype}
                 />
 
@@ -234,23 +254,24 @@ export default function HotelDetails() {
                   <Typography
                     sx={{
                       mt: 2,
-                      color: "green",
+                      color: isAvailable ? "green" : "#8B5E3C",
                       fontWeight: "bold"
                     }}
                   >
-                    Available
+                    {isAvailable ? "Available" : "Booked"}
                   </Typography>
 
                   <Button
                     variant="contained"
-                    disabled={bookingInProgress}
+                    disabled={!isAvailable || bookingInProgress}
                     sx={{
                       marginTop: 2,
-                      backgroundColor: "#8B5E3C"
+                      backgroundColor: "#8B5E3C",
+                      opacity: isAvailable ? 1 : 0.7
                     }}
                     onClick={() => bookRoom(room)}
                   >
-                    {bookingInProgress ? "Booking..." : "Book Now"}
+                    {!isAvailable ? "Booked" : bookingInProgress ? "Booking..." : "Book Now"}
                   </Button>
 
                 </CardContent>
@@ -258,8 +279,8 @@ export default function HotelDetails() {
               </Card>
 
             </Grid>
-
-          ))}
+          );
+        })}
 
       </Grid>
 
@@ -269,13 +290,10 @@ export default function HotelDetails() {
         </Typography>
       )}
 
-      {!loading && !error && rooms.filter(
-        (room) => room.status === "available"
-      ).length === 0 && (
+      {!loading && !error && availableRooms.length === 0 && (
 
         <Typography sx={{ mt: 3 }}>
-          No rooms available for this hotel.
-
+          No rooms available for this hotel right now.
         </Typography>
 
       )}

@@ -592,7 +592,7 @@ html[data-theme="dark"] .profile-button .avatar-sm {
 .chart-column {
   height: 100%;
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: 1fr auto auto;
   align-items: end;
   gap: 0.6rem;
   color: var(--admin-muted);
@@ -604,35 +604,16 @@ html[data-theme="dark"] .profile-button .avatar-sm {
 .chart-column span {
   width: 100%;
   height: var(--bar-size);
-  min-height: 28px;
+  min-height: 0;
   display: block;
   border-radius: 8px 8px 3px 3px;
   background: linear-gradient(180deg, var(--admin-primary), var(--admin-success));
   box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
 }
 
-.bar-42 {
-  --bar-size: 42%;
-}
-
-.bar-58 {
-  --bar-size: 58%;
-}
-
-.bar-51 {
-  --bar-size: 51%;
-}
-
-.bar-72 {
-  --bar-size: 72%;
-}
-
-.bar-66 {
-  --bar-size: 66%;
-}
-
-.bar-83 {
-  --bar-size: 83%;
+.chart-value {
+  font-size: 0.72rem;
+  white-space: nowrap;
 }
 
 .activity-list {

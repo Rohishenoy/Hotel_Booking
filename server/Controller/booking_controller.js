@@ -163,6 +163,40 @@ export const AddBooking = async (req, res) => {
 
 };
 
+export const ViewBooking = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const skip = (page - 1) * limit;
+
+        const [bookings, totalbooking] = await Promise.all([
+            bookingmodel
+                .find()
+                .populate("user", "name email")
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
+            bookingmodel.countDocuments()
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            allbooking: bookings,
+            currentpage: page,
+            totalbooking,
+            totalpages: Math.ceil(totalbooking / limit) || 1,
+            limit
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: error.message
+        });
+    }
+};
+
 export const ViewBookingByUser = async (req, res) => {
 
     try {
@@ -171,6 +205,7 @@ export const ViewBookingByUser = async (req, res) => {
 
         const bookings = await bookingmodel
             .find({ user: userId })
+            .populate("hotel", "hotelname")
             .sort({ createdAt: -1 });
 
         return res.status(200).json({
@@ -182,6 +217,74 @@ export const ViewBookingByUser = async (req, res) => {
 
         console.log(error);
 
+        return res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: error.message
+        });
+    }
+};
+
+export const DeleteBooking = async (req, res) => {
+    try {
+        const { bid } = req.params;
+
+        const deletedBooking = await bookingmodel.findByIdAndDelete(bid);
+
+        if (!deletedBooking) {
+            return res.status(404).json({
+                success: false,
+                message: "Booking not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Booking deleted successfully"
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: error.message
+        });
+    }
+};
+
+export const UpdateBookingStatus = async (req, res) => {
+    try {
+        const { bid } = req.params;
+        const { bookingStatus } = req.body;
+        const allowedStatuses = ["pending", "approved", "rejected", "cancelled"];
+
+        if (!allowedStatuses.includes(bookingStatus)) {
+            return res.status(400).json({
+                success: false,
+                message: "A valid booking status is required"
+            });
+        }
+
+        const booking = await bookingmodel.findByIdAndUpdate(
+            bid,
+            { bookingStatus },
+            { new: true, runValidators: true }
+        );
+
+        if (!booking) {
+            return res.status(404).json({
+                success: false,
+                message: "Booking not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Booking status updated successfully",
+            booking
+        });
+    } catch (error) {
+        console.log(error);
         return res.status(500).json({
             success: false,
             message: "Server error",
