@@ -14,7 +14,18 @@ const getImageUrl = (image) => {
   }
   return `${host}/image/${image}`;
 };
+const getRoomImage = (room) => {
+  const roomType = room.roomtype?.toLowerCase();
 
+  if (roomType.includes("single")) return "/images/room1.jpg";
+  if (roomType.includes("double")) return "/images/room2.jpg";
+  if (roomType.includes("deluxe")) return "/images/room3.jpg";
+  if (roomType.includes("family")) return "/images/room4.jpg";
+  if (roomType.includes("premium")) return "/images/room5.jpg";
+  if (roomType.includes("suite")) return "/images/room6.jpg";
+
+  return "/images/room1.jpg";
+};
 export default function HotelDetails() {
 
   const { id } = useParams();
@@ -71,8 +82,8 @@ export default function HotelDetails() {
     const userId = localStorage.getItem("UserId");
 
     if (!userId) {
-      alert("Please log in to complete your booking.");
-      navigate("/Login", {
+      alert("Please register to complete your booking.");
+      navigate("/registe", {
         state: {
           returnTo: {
             pathname: location.pathname,
@@ -226,7 +237,7 @@ export default function HotelDetails() {
                     objectFit: "contain",
                     backgroundColor: "#f5f5f5"
                   }}
-                  image={getImageUrl(room.image)}
+                  image={room.image ? getImageUrl(room.image) : getRoomImage(room)}
                   alt={room.roomtype}
                 />
 

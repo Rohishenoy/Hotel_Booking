@@ -323,9 +323,12 @@ button {
 }
 
 .book_room {
-     background-color: #000000c7;
+     background-color: #0e15dcc7;
      padding: 30px 35px;
-     border-left: #ff0909 solid 5px;
+     border-left: #e26e08 solid 5px;
+     border-right: #e26e08 solid 5px;
+     border-bottom: #e26e08 solid 5px;
+     border-top: #e26e08 solid 5px;
 }
 
 .book_room h1 {

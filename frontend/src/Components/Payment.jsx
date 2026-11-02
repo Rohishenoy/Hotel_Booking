@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import {Container,Paper,Typography,Button,Radio,RadioGroup,FormControlLabel,TextField,Box,Divider,Chip} from "@mui/material";
 import {useLocation,useNavigate} from "react-router-dom";
@@ -10,6 +10,7 @@ export default function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
   const booking = location.state;
+  const isLoggedIn = Boolean(localStorage.getItem("UserId"));
   const [method, setMethod] = useState("");
   const [payment, setPayment] = useState({
     upi: "",
@@ -18,6 +19,24 @@ export default function Payment() {
     expiry: "",
     cvv: ""
   });
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate("/Login", {
+        replace: true,
+        state: {
+          returnTo: {
+            pathname: location.pathname,
+            state: booking
+          }
+        }
+      });
+    }
+  }, [booking, isLoggedIn, location.pathname, navigate]);
+
+  if (!isLoggedIn) {
+    return null;
+  }
 
 
   // Payment input
@@ -62,7 +81,14 @@ const handlePayment = async () => {
 
     if (!userId) {
         alert("Please login first");
-        navigate("/Login");
+        navigate("/Login", {
+            state: {
+                returnTo: {
+                    pathname: location.pathname,
+                    state: booking
+                }
+            }
+        });
         return;
     }
 

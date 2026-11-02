@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {useLocation,useNavigate} from "react-router-dom";
 import {Container,Paper,Typography,Button,Divider,Box,Chip} from "@mui/material";
 
@@ -6,7 +6,26 @@ export default function Booking() {
   const location = useLocation();
   const navigate = useNavigate();
   const booking = location.state;
+  const isLoggedIn = Boolean(localStorage.getItem("UserId"));
   const bookingStatus = booking?.bookingStatus || "pending";
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate("/Login", {
+        replace: true,
+        state: {
+          returnTo: {
+            pathname: location.pathname,
+            state: booking
+          }
+        }
+      });
+    }
+  }, [booking, isLoggedIn, location.pathname, navigate]);
+
+  if (!isLoggedIn) {
+    return null;
+  }
 
   const statusConfig = {
     pending: { label: "Booking Pending", color: "#f5e6da", textColor: "#8B5E3C" },

@@ -3,7 +3,7 @@ import {BrowserRouter,Routes,Route,useLocation} from 'react-router-dom'
 import Register from './Components/Register'
 import Login from './Components/Login'
 import About from './Components/About'
-import Blog from './Components/Blog'
+// import Blog from './Components/Blog'
 import Contact from './Components/Contact'
 import Gallery from './Components/Gallery'
 import Header from './Components/Header'
@@ -33,7 +33,7 @@ function AppContent(){
         <Route path='/Register'element={<Register/>} />
         <Route path='/Login'element={<Login/>} />
         <Route path='/About'element={<About/>} />
-        <Route path='/Blog'element={<Blog/>} />
+        {/* <Route path='/Blog'element={<Blog/>} /> */}
         <Route path='/Contact'element={<Contact/>} />
         <Route path='/Gallery'element={<Gallery/>} />
 

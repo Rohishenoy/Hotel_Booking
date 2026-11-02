@@ -13,7 +13,7 @@ export const InsertAdmin = async (req, res) => {
             password: hashpassword
         });
         await newadmin.save();
-        res.json({success: true,message: "admin added",newadmin});
+        res.json({success:true,message: "admin added",newadmin});
     } catch (error) {
         console.log(error);
         res.status(500).json({success: false,message: "server error",error});
@@ -22,7 +22,7 @@ export const InsertAdmin = async (req, res) => {
 
 export const Login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const {email,password }= req.body;
         const admin = await admin_model.findOne({ email });
         console.log(admin);
 
