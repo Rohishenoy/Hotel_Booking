@@ -48,6 +48,10 @@ export default function Sidebar() {
             <span className="nav-icon"><i className="bi bi-geo" aria-hidden="true" /></span>
             <span className="nav-text">Review</span>
           </NavLink>
+             <NavLink className="nav-link" to="/ManageContact">
+               <span className="nav-icon"><i className="bi bi-chat-left-text" aria-hidden="true" /></span>
+               <span className="nav-text">Contact Messages</span>
+             </NavLink>
         </nav>
         <div className="sidebar-user">
           <img className="avatar-img avatar-md sidebar-user-avatar" src={adminAvatar} alt="Admin" />

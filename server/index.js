@@ -8,6 +8,7 @@ import RORoute from "./Routes/room_route.js";
 import RERoute from "./Routes/review_route.js";
 import LRoute from './Routes/location_route.js'
 import ARoute from './Routes/admin_route.js'
+import CRoute from './Routes/contact_route.js'
 
 import cors from 'cors'
 import databaseconnection from './Database/database.js';
@@ -36,5 +37,6 @@ app.use("/Room",RORoute);
 app.use("/Review",RERoute);
 app.use("/Location",LRoute);
 app.use('/Admin',ARoute)
+app.use('/Contact',CRoute)
 
 const route = express.Router()

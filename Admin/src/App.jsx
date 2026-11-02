@@ -22,6 +22,7 @@ import ManageRoom from "./Components/ManageRoom";
 import ManageBooking from "./Components/ManageBooking";
 import ManagePayment from "./Components/ManagePayment";
 import ManageReview from "./Components/ManageReview";
+import ManageContact from "./Components/ManageContact";
 
 
 function AppContent() {
@@ -52,6 +53,7 @@ function AppContent() {
           <Route path="/ManageBooking" element={<ManageBooking />}/>
           <Route path="/ManagePayment" element={<ManagePayment />}/>
           <Route path="/ManageReview"element={<ManageReview />}/>
+          <Route path="/ManageContact" element={<ManageContact />} />
         </Route>
       </Routes>
     </div>
