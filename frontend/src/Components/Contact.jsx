@@ -48,6 +48,7 @@ export default function Contact() {
 
   return (
     <>
+      <div className="contact-page">
       <div className="back_re">
         <div className="container">
           <div className="row">
@@ -157,6 +158,7 @@ export default function Contact() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </>
   );

@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import {
   Alert,
-  Box,
   Button,
   Card,
   CardContent,
@@ -24,8 +23,6 @@ const statusStyles = {
   rejected: { label: "Rejected", background: "#fdecea", color: "#b3261e" },
   cancelled: { label: "Cancelled", background: "#f1f3f4", color: "#5f6368" }
 };
-
-const bookingSteps = ["Booking requested", "Booking confirmed"];
 
 export default function MyBookings() {
   const navigate = useNavigate();
@@ -71,18 +68,25 @@ export default function MyBookings() {
   }, [getBookings]);
 
   return (
-    <Container sx={{ mt: 4, mb: 6 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-        <Typography variant="h4" fontWeight="bold">
-          Track My Bookings
-        </Typography>
-        <Button onClick={getBookings} disabled={loading}>
+    <Container className="my-bookings-page">
+      <header className="my-bookings-header">
+        <div>
+          <p className="eyebrow">YOUR STAY, ALL IN ONE PLACE</p>
+          <Typography component="h1" variant="h4">My bookings</Typography>
+          <p className="my-bookings-header__description">
+            Follow each reservation from request to confirmation.
+          </p>
+        </div>
+        <Button
+          className="my-bookings-refresh"
+          onClick={getBookings}
+          disabled={loading}
+          variant="outlined"
+        >
           Refresh status
         </Button>
-      </Box>
-      <Typography color="text.secondary" sx={{ mb: 3 }}>
-        Booking statuses refresh automatically every 30 seconds.
-      </Typography>
+      </header>
+      <p className="my-bookings-refresh-note">Statuses refresh automatically every 30 seconds.</p>
 
       {error && (
         <Alert
@@ -99,76 +103,99 @@ export default function MyBookings() {
       )}
 
       {loading && (
-        <Container sx={{ display: "flex", justifyContent: "center", py: 5 }}>
+        <Container className="my-bookings-loading">
           <CircularProgress />
         </Container>
       )}
 
       {!loading && !error && bookings.length === 0 && (
-        <Alert severity="info">You do not have any bookings to track yet.</Alert>
+        <div className="my-bookings-empty">
+          <span aria-hidden="true">✦</span>
+          <Typography component="h2">Your next stay starts here</Typography>
+          <p>You do not have any bookings yet. Explore our rooms and find a place to unwind.</p>
+          <Button variant="contained" onClick={() => navigate("/Room")}>Explore rooms</Button>
+        </div>
       )}
 
       {!loading && bookings.map((booking) => {
         const status = statusStyles[booking.bookingStatus] || statusStyles.pending;
+        const statusKey = statusStyles[booking.bookingStatus] ? booking.bookingStatus : "pending";
         const isTerminal = ["rejected", "cancelled"].includes(booking.bookingStatus);
-        const activeStep = booking.bookingStatus === "approved" ? bookingSteps.length : 0;
+        const statusStepLabel = booking.bookingStatus === "pending"
+          ? "Pending confirmation"
+          : booking.bookingStatus === "approved"
+            ? "Booking confirmed"
+            : booking.bookingStatus === "rejected"
+              ? "Booking rejected"
+              : "Booking cancelled";
+        const bookingSteps = ["Booking requested", statusStepLabel];
+        const activeStep = booking.bookingStatus === "pending" ? 0 : 1;
 
         return (
-          <Card key={booking._id} sx={{ mb: 3 }}>
+          <Card className={`my-bookings-card my-bookings-card--${statusKey}`} key={booking._id}>
             <CardContent>
-              <Typography variant="h5" fontWeight="bold">
-                {booking.hotel?.hotelname || booking.roomType} booking
-              </Typography>
-              <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                Booking reference: {booking._id}
-              </Typography>
+              <div className="my-bookings-card__top">
+                <div>
+                  <p className="eyebrow">RESERVATION</p>
+                  <Typography component="h2" variant="h5">
+                    {booking.hotel?.hotelname || booking.roomType} booking
+                  </Typography>
+                  <Typography className="my-bookings-reference" color="text.secondary">
+                    Reference · {booking._id}
+                  </Typography>
+                  {booking.room?.roomnumber && (
+                    <Typography className="my-bookings-room" color="text.secondary">
+                      Room {booking.room.roomnumber} · {booking.room.roomtype}
+                      {["pending", "approved"].includes(booking.bookingStatus) && booking.room.status === "booked"
+                        ? " · Occupied / Booked"
+                        : ""}
+                    </Typography>
+                  )}
+                </div>
+                <Chip
+                  className={`my-bookings-status my-bookings-status--${statusKey}`}
+                  label={status.label}
+                />
+              </div>
 
-              <Chip
-                label={status.label}
-                sx={{
-                  mt: 2,
-                  backgroundColor: status.background,
-                  color: status.color,
-                  fontWeight: "bold"
-                }}
-              />
+              <Stepper className="my-bookings-stepper" activeStep={activeStep}>
+                {bookingSteps.map((step, index) => (
+                  <Step key={step}>
+                    <StepLabel error={isTerminal && index === activeStep}>
+                      {step}
+                    </StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
 
-              {!isTerminal ? (
-                <Stepper activeStep={activeStep} sx={{ mt: 3, mb: 3 }}>
-                  {bookingSteps.map((step) => (
-                    <Step key={step}>
-                      <StepLabel>{step}</StepLabel>
-                    </Step>
-                  ))}
-                </Stepper>
-              ) : (
-                <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
+              {isTerminal && (
+                <Alert className="my-bookings-terminal-alert" severity="error">
                   This booking is {booking.bookingStatus}. Contact the hotel if you need help.
                 </Alert>
               )}
 
-              <Divider sx={{ mb: 2 }} />
-              <Typography>Location: {booking.location}</Typography>
-              <Typography>
-                Arrival: {new Date(booking.arrival).toLocaleDateString()}
-              </Typography>
-              <Typography>
-                Departure: {new Date(booking.departure).toLocaleDateString()}
-              </Typography>
-              <Typography>Rooms: {booking.rooms}</Typography>
-              <Typography>Guests: {booking.adults} adults, {booking.children} children</Typography>
-              <Typography sx={{ mt: 1 }} fontWeight="bold">
-                Total: ₹{booking.totalAmount}
-              </Typography>
+              <Divider className="my-bookings-divider" />
+              <div className="my-bookings-details">
+                <div><span>LOCATION</span><strong>{booking.location}</strong></div>
+                <div><span>CHECK IN</span><strong>{new Date(booking.arrival).toLocaleDateString()}</strong></div>
+                <div><span>CHECK OUT</span><strong>{new Date(booking.departure).toLocaleDateString()}</strong></div>
+                <div><span>ROOMS &amp; GUESTS</span><strong>{booking.rooms} room · {booking.adults} adults, {booking.children} children</strong></div>
+              </div>
+              <div className="my-bookings-card__footer">
+                <div className="my-bookings-total">
+                  <span>TOTAL STAY</span>
+                  <strong>₹{booking.totalAmount}</strong>
+                </div>
               {booking.bookingStatus === "approved" && booking.hotel?._id && (
                 <Button
+                  className="my-bookings-review"
                   variant="contained"
-                  sx={{ mt: 2, backgroundColor: "#8B5E3C" }}
                   onClick={() => navigate(`/Review?hotelId=${booking.hotel._id}&hotelName=${encodeURIComponent(booking.hotel.hotelname || "")}`)}
                 >
                   Write a review
                 </Button>
               )}
+              </div>
             </CardContent>
           </Card>
         );

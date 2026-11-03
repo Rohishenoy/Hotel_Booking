@@ -1,9 +1,11 @@
  import jwt from 'jsonwebtoken'
- export const AuthUsercheck=async(req,res,next)=>{
+
+ const SECRET_KEY = process.env.SECRET_KEY || "mernstack"
+  export const AuthUsercheck=async(req,res,next)=>{
     try {
         const utoken=await req.header("auth-token")
         if(utoken){
-            const udata=await jwt.verify(utoken,process.env.SECRET_KEY)
+            const udata=await jwt.verify(utoken,SECRET_KEY)
             console.log("token details",udata)
             req.id= udata.id
             next()

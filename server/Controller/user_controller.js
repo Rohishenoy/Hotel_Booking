@@ -1,7 +1,7 @@
 import usermodel from "../Models/user_model.js";
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-const SECRET_KEY ="mernstack"
+const SECRET_KEY = process.env.SECRET_KEY || "mernstack"
 
 export const AddUser =async(req,res)=>{
 try {

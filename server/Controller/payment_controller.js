@@ -1,8 +1,12 @@
 
 import paymentmodel from "../Models/payment_model.js";
 import bookingmodel from "../Models/booking_model.js";
+import roommodel from "../Models/room_model.js";
+import mongoose from "mongoose";
 
 export const ConfirmPayment = async (req, res) => {
+    let approvedBookingId;
+
     try {
 
         const {
@@ -13,12 +17,26 @@ export const ConfirmPayment = async (req, res) => {
             transactionId
         } = req.body;
 
-        console.log("Payment data:", req.body);
-
-        if (!bookingId || !userId || !amount || !paymentMethod) {
+        if (!bookingId || !userId || amount === undefined || !paymentMethod) {
             return res.status(400).json({
                 success: false,
                 message: "Please fill all required fields"
+            });
+        }
+
+        if (!mongoose.isValidObjectId(bookingId) || !mongoose.isValidObjectId(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid booking or user"
+            });
+        }
+
+        const paymentAmount = Number(amount);
+        const allowedMethods = ["COD", "UPI", "Card"];
+        if (!Number.isFinite(paymentAmount) || !allowedMethods.includes(paymentMethod)) {
+            return res.status(400).json({
+                success: false,
+                message: "A valid payment amount and payment method are required"
             });
         }
 
@@ -31,26 +49,72 @@ export const ConfirmPayment = async (req, res) => {
             });
         }
 
+        if (booking.user.toString() !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: "This booking does not belong to the supplied user"
+            });
+        }
+
+        if (booking.bookingStatus !== "pending") {
+            return res.status(409).json({
+                success: false,
+                code: "BOOKING_NOT_PAYABLE",
+                message: booking.bookingStatus === "approved"
+                    ? "This booking has already been confirmed."
+                    : "This booking is no longer active and cannot be paid."
+            });
+        }
+
+        if (paymentAmount !== booking.totalAmount) {
+            return res.status(400).json({
+                success: false,
+                message: "Payment amount does not match the booking total"
+            });
+        }
+
+        if (booking.room) {
+            const reservedRoom = await roommodel.exists({
+                _id: booking.room,
+                status: "booked",
+                activeBooking: booking._id
+            });
+
+            if (!reservedRoom) {
+                return res.status(409).json({
+                    success: false,
+                    code: "ROOM_RESERVATION_LOST",
+                    message: "This room is no longer reserved for the booking. Please contact the hotel."
+                });
+            }
+        }
+
+        const updatedBooking = await bookingmodel.findOneAndUpdate(
+            { _id: bookingId, user: userId, bookingStatus: "pending" },
+            { $set: { bookingStatus: "approved" } },
+            { new: true }
+        );
+
+        if (!updatedBooking) {
+            return res.status(409).json({
+                success: false,
+                code: "BOOKING_STATUS_CHANGED",
+                message: "This booking changed while payment was being processed. Refresh your bookings."
+            });
+        }
+        approvedBookingId = updatedBooking._id;
+
         const payment = new paymentmodel({
             booking: bookingId,
             user: userId,
-            amount: Number(amount),
+            amount: paymentAmount,
             paymentMethod: paymentMethod,
             paymentStatus: paymentMethod === "COD" ? "pending" : "paid",
             transactionId: transactionId || ""
         });
 
         const savedPayment = await payment.save();
-
-        const updatedBooking = await bookingmodel.findByIdAndUpdate(
-            bookingId,
-            {
-                bookingStatus: "approved"
-            },
-            {
-                new: true
-            }
-        );
+        approvedBookingId = null;
 
         console.log("Payment saved:", savedPayment);
 
@@ -64,6 +128,17 @@ export const ConfirmPayment = async (req, res) => {
     } catch (error) {
 
         console.log("PAYMENT ERROR:", error);
+
+        if (approvedBookingId) {
+            try {
+                await bookingmodel.updateOne(
+                    { _id: approvedBookingId, bookingStatus: "approved" },
+                    { $set: { bookingStatus: "pending" } }
+                );
+            } catch (rollbackError) {
+                console.error("Failed to restore booking status after payment error:", rollbackError);
+            }
+        }
 
         return res.status(500).json({
             success: false,

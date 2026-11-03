@@ -72,7 +72,7 @@ export default function Review({ hotelId: providedHotelId }) {
     };
 
     return (
-        <Container sx={{ mt: 5 }}>
+        <Container className="review-page" sx={{ mt: 5 }}>
             <Typography variant="h5">
                 Review {hotelName || "Your Hotel"}
             </Typography>

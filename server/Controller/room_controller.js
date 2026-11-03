@@ -1,4 +1,5 @@
 import roommodel from "../Models/room_model.js";
+import bookingmodel from "../Models/booking_model.js";
 
 
 // ADD ROOM
@@ -160,21 +161,61 @@ export const UpdateRoom = async (req, res) => {
 
         const { rid } = req.params;
 
-        const updatedRoom =
-            await roommodel.findByIdAndUpdate(
-                rid,
-                {
-                    ...req.body,
-                    roomnumber: req.body.roomnumber || undefined,
-                    status: req.body.status || "available"
-                },
-                { new: true }
-            );
-
-        if (!updatedRoom) {
+        const room = await roommodel.findById(rid);
+        if (!room) {
             return res.status(404).json({
                 success: false,
                 message: "Room not found"
+            });
+        }
+
+        if (req.body.status && req.body.status !== room.status) {
+            const activeBooking = await bookingmodel.exists({
+                room: room._id,
+                bookingStatus: { $in: ["pending", "approved"] }
+            });
+
+            if (activeBooking && req.body.status !== "booked") {
+                return res.status(409).json({
+                    success: false,
+                    code: "ROOM_HAS_ACTIVE_BOOKING",
+                    message: "This room has an active booking. Cancel or reject the booking before changing its occupied status."
+                });
+            }
+        }
+
+        const allowedFields = [
+            "hotel",
+            "roomnumber",
+            "roomtype",
+            "price",
+            "capacity",
+            "description",
+            "image",
+            "status"
+        ];
+        const updates = {};
+        allowedFields.forEach((field) => {
+            if (req.body[field] !== undefined) updates[field] = req.body[field];
+        });
+        const filter = { _id: rid };
+        if (req.body.status && req.body.status !== room.status) {
+            filter.status = room.status;
+            if (req.body.status !== "booked") {
+                filter.activeBooking = { $in: [null] };
+            }
+        }
+
+        const updatedRoom = await roommodel.findOneAndUpdate(
+            filter,
+            { $set: updates },
+            { new: true, runValidators: true }
+        );
+        if (!updatedRoom) {
+            return res.status(409).json({
+                success: false,
+                code: "ROOM_STATUS_CHANGED",
+                message: "Room availability changed while you were editing. Refresh and try again."
             });
         }
 
@@ -202,13 +243,33 @@ export const DeleteRoom = async (req, res) => {
 
         const { rid } = req.params;
 
-        const deletedRoom =
-            await roommodel.findByIdAndDelete(rid);
+        const activeBooking = await bookingmodel.exists({
+            room: rid,
+            bookingStatus: { $in: ["pending", "approved"] }
+        });
+
+        if (activeBooking) {
+            return res.status(409).json({
+                success: false,
+                code: "ROOM_HAS_ACTIVE_BOOKING",
+                message: "This room has an active booking. Cancel or reject the booking before deleting it."
+            });
+        }
+
+        const deletedRoom = await roommodel.findOneAndDelete({
+            _id: rid,
+            status: { $ne: "booked" }
+        });
 
         if (!deletedRoom) {
-            return res.status(404).json({
+            const currentRoom = await roommodel.findById(rid).select("status");
+            const isOccupied = currentRoom?.status === "booked";
+            return res.status(isOccupied ? 409 : 404).json({
                 success: false,
-                message: "Room not found"
+                code: isOccupied ? "ROOM_OCCUPIED" : "ROOM_NOT_FOUND",
+                message: isOccupied
+                    ? "This room is occupied. Cancel or reject its booking before deleting it."
+                    : "Room not found"
             });
         }
 

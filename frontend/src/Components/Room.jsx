@@ -1,160 +1,198 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
-  Container,
-  Typography,
-  Grid,
-  Card,
-  CardMedia,
-  CardContent,
   Button,
-  Chip
+  Card,
+  CardContent,
+  CardMedia,
+  Chip,
+  Container,
+  Typography
 } from "@mui/material";
-
 import { useNavigate } from "react-router-dom";
+import { host } from "../Context/Host";
+
+const fallbackImage = "/images/room1.jpg";
+
+const getRoomImage = (room) => {
+  if (room.image) {
+    if (/^https?:\/\//i.test(room.image) || room.image.startsWith("data:")) return room.image;
+    if (room.image.startsWith("/")) return room.image;
+    return `${host}/image/${room.image}`;
+  }
+
+  const roomType = room.roomtype?.toLowerCase() || "";
+  if (roomType.includes("double")) return "/images/room2.jpg";
+  if (roomType.includes("deluxe")) return "/images/room3.jpg";
+  if (roomType.includes("family")) return "/images/room4.jpg";
+  if (roomType.includes("premium")) return "/images/room5.jpg";
+  if (roomType.includes("suite")) return "/images/room6.jpg";
+  return fallbackImage;
+};
+
+const getRoomStatus = (status) => {
+  if (status === "booked") return { label: "Occupied · Booked", color: "error" };
+  if (status === "available") return { label: "Available", color: "success" };
+  return { label: "Unavailable", color: "default" };
+};
 
 export default function Room() {
-
   const navigate = useNavigate();
+  const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const rooms = [
-    {
-      image: "/images/room1.jpg",
-      title: "Single Room",
-      price: "₹2,000 / night",
-      desc: "Comfortable room for one guest.",
-      roomNumbers: ["101", "104", "105","106"]
-    
-    },
-    {
-      image: "/images/room2.jpg",
-      title: "Double Room",
-      price: "₹3,000 / night",
-      desc: "Spacious room for two guests.",
-      roomNumbers: ["201", "202", "203"]
-    },
-    {
-      image: "/images/room3.jpg",
-      title: "Deluxe Room",
-      price: "₹4,000 / night",
-      desc: "Premium room with modern facilities.",
-      roomNumbers: ["301", "302", "303"]
-    },
-    {
-      image: "/images/room4.jpg",
-      title: "Family Room",
-      price: "₹5,000 / night",
-      desc: "Large room suitable for families.",
-      roomNumbers: ["401", "402", "403"]
-    },
-    {
-      image: "/images/room5.jpg",
-      title: "Premium Room",
-      price: "₹6,000 / night",
-      desc: "Luxury room with excellent facilities.",
-      roomNumbers: ["501", "502", "503"]
-    },
-    {
-      image: "/images/room6.jpg",
-      title: "Suite",
-      price: "₹8,000 / night",
-      desc: "Our best room for a luxury stay.",
-      roomNumbers: ["601", "602", "603"]
-    }
-  ];
+  useEffect(() => {
+    let cancelled = false;
 
-  const handleAvailability = (room) => {
-    navigate("/roomavailability", {
-      state: room
+    const loadRooms = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const firstResponse = await axios.get(`${host}/Room/ViewRoom`, {
+          params: { page: 1, limit: 100 }
+        });
+        if (!firstResponse.data.success) {
+          throw new Error(firstResponse.data.message || "Unable to load rooms");
+        }
+
+        const allRooms = firstResponse.data.allroom || [];
+        const totalPages = firstResponse.data.totalpages || 1;
+        const remainingPages = await Promise.all(
+          Array.from({ length: Math.max(0, totalPages - 1) }, (_, index) =>
+            axios.get(`${host}/Room/ViewRoom`, {
+              params: { page: index + 2, limit: 100 }
+            })
+          )
+        );
+
+        remainingPages.forEach((response) => {
+          if (!response.data.success) {
+            throw new Error(response.data.message || "Unable to load all rooms");
+          }
+          allRooms.push(...(response.data.allroom || []));
+        });
+
+        if (!cancelled) setRooms(allRooms);
+      } catch (requestError) {
+        console.error("Room list loading error:", requestError);
+        if (!cancelled) {
+          setError(
+            requestError.response?.data?.message ||
+            requestError.message ||
+            "Unable to load rooms"
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadRooms();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleRoomDetails = (room) => {
+    navigate("/RoomAvailability", {
+      state: {
+        ...room,
+        title: room.roomtype,
+        desc: room.description || "A comfortable room with thoughtful amenities.",
+        roomNumbers: [room.roomnumber],
+        image: getRoomImage(room)
+      }
     });
   };
 
   return (
-    <Container sx={{ py: 7 }}>
+    <main className="rooms-page">
+      <section className="rooms-intro">
+        <p className="eyebrow">STAY HAVEN COLLECTION</p>
+        <Typography component="h1" className="rooms-intro__title">
+          Find your room
+        </Typography>
+        <p>Explore real room availability across our hotels. Booked rooms are clearly marked.</p>
+      </section>
 
-      <Typography
-        variant="h3"
-        textAlign="center"
-        color="#8B5E3C"
-        fontWeight="bold"
-        mb={5}
-      >
-        Our Rooms
-      </Typography>
+      <Container maxWidth="lg" className="rooms-container">
+        {loading && (
+          <div className="room-list-message" role="status">Loading room availability…</div>
+        )}
 
-      <Grid container spacing={3}>
+        {!loading && error && (
+          <div className="room-list-message room-list-message--error" role="alert">
+            <p>{error}</p>
+            <Button onClick={() => window.location.reload()}>Try again</Button>
+          </div>
+        )}
 
-        {rooms.map((room, index) => (
+        {!loading && !error && rooms.length === 0 && (
+          <div className="room-list-message">
+            No rooms have been added yet. Please check back soon.
+          </div>
+        )}
 
-          <Grid item xs={12} sm={6} md={4} key={index}>
-
-            <Card>
-
-              <CardMedia
-                component="img"
-                height="220"
-                image={room.image}
-                alt={room.title}
-              />
-
-              <CardContent>
-
-                <Typography
-                  variant="h5"
-                  fontWeight="bold"
-                  color="#8B5E3C"
-                >
-                  {room.title}
-                </Typography>
-
-                <Typography
-                  fontWeight="bold"
-                  sx={{ mt: 1 }}
-                >
-                  {room.price}
-                </Typography>
-
-                <Typography sx={{ mt: 1 }}>
-                  {room.desc}
-                </Typography>
-
-                <Typography
-                  fontWeight="bold"
-                  sx={{ mt: 2 }}
-                >
-                  Available Room Numbers:
-                </Typography>
-
-                <div style={{ marginTop: "8px" }}>
-                  {room.roomNumbers.map((number) => (
-                    <Chip
-                      key={number}
-                      label={`Room ${number}`}
-                      sx={{ mr: 1, mb: 1 }}
-                    />
-                  ))}
+        {!loading && !error && rooms.length > 0 && (
+          <div className="room-grid">
+            {rooms.map((room, index) => {
+              const status = getRoomStatus(room.status);
+              return (
+                <div className="room-grid__item" key={room._id}>
+                  <Card className="room-card" style={{ "--card-order": index % 12 }}>
+                    <div className="room-card__image-wrap">
+                      <CardMedia
+                        component="img"
+                        className="room-card__image"
+                        image={getRoomImage(room)}
+                        alt={`${room.roomtype} at ${room.hotel?.hotelname || "Stay Haven"}`}
+                        onError={(event) => {
+                          if (!event.currentTarget.dataset.fallbackApplied) {
+                            event.currentTarget.dataset.fallbackApplied = "true";
+                            event.currentTarget.src = fallbackImage;
+                          }
+                        }}
+                      />
+                      <span className="room-card__badge">Room {room.roomnumber}</span>
+                    </div>
+                    <CardContent className="room-card__content">
+                      <div className="room-card__heading">
+                        <Typography component="h2" className="room-card__title">
+                          {room.roomtype}
+                        </Typography>
+                        <Chip
+                          size="small"
+                          color={status.color}
+                          label={status.label}
+                          aria-label={`Room ${room.roomnumber} status: ${status.label}`}
+                        />
+                      </div>
+                      <Typography className="room-card__description">
+                        {room.hotel?.hotelname || "Hotel details unavailable"}
+                        {room.capacity ? ` · Up to ${room.capacity} guests` : ""}
+                      </Typography>
+                      <div className="room-card__bottom">
+                        <p className="room-card__price">
+                          <strong>₹{room.price}</strong> <span>/ night</span>
+                        </p>
+                        <Button
+                          className="room-card__button"
+                          variant="contained"
+                          onClick={() => handleRoomDetails(room)}
+                        >
+                          Room details
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-
-                <Button
-                  variant="contained"
-                  sx={{
-                    mt: 2,
-                    backgroundColor: "#8B5E3C"
-                  }}
-                  onClick={() => handleAvailability(room)}
-                >
-                  View Room Availability
-                </Button>
-
-              </CardContent>
-
-            </Card>
-
-          </Grid>
-
-        ))}
-
-      </Grid>
-
-    </Container>
+              );
+            })}
+          </div>
+        )}
+      </Container>
+    </main>
   );
 }

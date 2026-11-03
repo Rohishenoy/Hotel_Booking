@@ -8,7 +8,8 @@ const roomschema = new mongoose.Schema({
     capacity:{type:Number},
     description:{type:String},
     image:{type:String},
-    status:{type: String,enum: ["available", "booked", "inactive"],default: "available"}
+    status:{type: String,enum: ["available", "booked", "inactive"],default: "available"},
+    activeBooking:{type:mongoose.Schema.Types.ObjectId,ref:"Booking"}
 });
 
 export default mongoose.model("Room", roomschema);

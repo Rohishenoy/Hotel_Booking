@@ -18,6 +18,7 @@ import Payment from './Components/Payment'
 import Review from './Components/Review'
 import MyBookings from "./Components/MyBookings";
 import RoomAvailability from './Components/RoomAvailability'
+import Profile from './Components/Profile'
 function AppContent(){
   const location=useLocation()
   console.log(location)
@@ -46,6 +47,7 @@ function AppContent(){
         <Route path='/Booking'element={<Booking/>} />
         <Route path='/Payment'element={<Payment/>} />
         <Route path='/MyBookings'element={<MyBookings/>} />
+        <Route path='/Profile'element={<Profile/>} />
         <Route path='/Review'element={<Review/>} />
 
 

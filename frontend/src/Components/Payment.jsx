@@ -131,7 +131,7 @@ const handlePayment = async () => {
   // No booking
   if (!booking) {
     return (
-      <Container sx={{ py: 8 }}>
+      <Container className="payment-page" sx={{ py: 8 }}>
         <Paper
           elevation={8}
           sx={{
@@ -169,6 +169,7 @@ const handlePayment = async () => {
   return (
     <Container
       maxWidth="sm"
+      className="payment-page"
       sx={{
         py: 6
       }}

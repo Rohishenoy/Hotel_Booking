@@ -18,7 +18,7 @@ import GroupsIcon from '@mui/icons-material/Groups'
 
 export default function About() {
 return (
-<Box sx={{ backgroundColor: '#faf8f5' }}>
+<Box className="about-page" sx={{ backgroundColor: '#faf8f5' }}>
 
     {/* ================= ABOUT HOTEL ================= */}
     <Container maxWidth="lg" sx={{ py: { xs: 6, md: 9 } }}>

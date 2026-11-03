@@ -40,7 +40,7 @@ export default function Booking() {
   if (!booking) {
 
     return (
-      <Container sx={{py:8}}>
+      <Container className="booking-page" sx={{py:8}}>
 
         <Paper elevation={8}sx={{maxWidth: 450,margin: "auto",padding: 5,textAlign: "center",borderRadius: 4 }}>
         <Typography variant="h5"fontWeight="bold"color="#8B5E3C"mb={3}> No Booking Found</Typography>
@@ -54,7 +54,7 @@ export default function Booking() {
 
 
   return (
-    <Container maxWidth="sm"sx={{py: 6 }}>
+    <Container maxWidth="sm" className="booking-page" sx={{py: 6 }}>
       <Paper elevation={12}sx={{borderRadius: 4,overflow: "hidden"}}>
         {/* Header */}
         <Box sx={{backgroundColor: "#8B5E3C",color: "white",textAlign: "center",py: 4, px: 3}}>

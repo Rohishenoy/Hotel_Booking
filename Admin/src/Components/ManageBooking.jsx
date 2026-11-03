@@ -147,6 +147,8 @@ export default function ManageBooking() {
 
                             <TableCell>Room Type</TableCell>
 
+                            <TableCell>Room Number</TableCell>
+
                             <TableCell>Rooms</TableCell>
 
                             <TableCell>Adults</TableCell>
@@ -187,6 +189,12 @@ export default function ManageBooking() {
 
                                 <TableCell>
                                     {booking.roomType}
+                                </TableCell>
+
+                                <TableCell>
+                                    {booking.room?.roomnumber
+                                        ? `#${booking.room.roomnumber} · ${booking.room.status === "booked" ? "Occupied / Booked" : "Available"}`
+                                        : "—"}
                                 </TableCell>
 
                                 <TableCell>
