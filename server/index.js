@@ -16,7 +16,16 @@ import databaseconnection from './Database/database.js';
 configDotenv();
 const app=express();
 
-app.use(cors())
+const allowedOrigins = [
+    'https://hotel-booking-nq3s.vercel.app',
+    'https://hotel-booking-steel-omega.vercel.app'
+]
+
+app.use(cors({
+    origin: allowedOrigins,
+    methods: ['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization','auth-token']
+}))
 app.use(express.json())
 app.get('/',(_req,res)=>{
     res.status(200).json({success:true,message:"Hotel booking API is running"})
