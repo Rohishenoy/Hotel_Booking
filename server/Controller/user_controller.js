@@ -40,6 +40,9 @@ const hashpassword= await bcrypt.hash(upassword,10)
 export const Login = async (req, res) => {
     try {
         const { uemail, upassword } = req.body;
+        if (!uemail || !upassword) {
+            return res.status(400).json({success: false,message: "Email and password are required"});
+        }
         const user = await usermodel.findOne({ email: uemail});
         // Email not found
         if (!user) {

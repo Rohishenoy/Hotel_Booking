@@ -16,18 +16,11 @@ import databaseconnection from './Database/database.js';
 configDotenv();
 const app=express();
 
-// const PORT_NUMBER= 7009
-
-app.listen(process.env.PORT_NUMBER,()=>{
-    console.log(`Server is running on port number: ${process.env.PORT_NUMBER}`)
-})
-
-
-
-databaseconnection()
 app.use(cors())
-
 app.use(express.json())
+app.get('/',(_req,res)=>{
+    res.status(200).json({success:true,message:"Hotel booking API is running"})
+})
 app.use('/User',URoute)
 app.use('/image',express.static('./Uploads'))
 app.use('/Booking',BRoute);
@@ -39,4 +32,14 @@ app.use("/Location",LRoute);
 app.use('/Admin',ARoute)
 app.use('/Contact',CRoute)
 
-const route = express.Router()
+const port=process.env.PORT || process.env.PORT_NUMBER || 7009
+
+try {
+    await databaseconnection()
+    app.listen(port,()=>{
+        console.log(`Server is running on port number: ${port}`)
+    })
+} catch (error) {
+    console.error("Unable to start server:",error)
+    process.exit(1)
+}
