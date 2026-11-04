@@ -9,17 +9,17 @@ import RERoute from "./Routes/review_route.js";
 import LRoute from './Routes/location_route.js'
 import ARoute from './Routes/admin_route.js'
 import CRoute from './Routes/contact_route.js'
-
+import { configDotenv } from 'dotenv'
 import cors from 'cors'
 import databaseconnection from './Database/database.js';
 
-
+configDotenv();
 const app=express();
 
-const PORT_NUMBER= 7009
+// const PORT_NUMBER= 7009
 
-app.listen(PORT_NUMBER,()=>{
-    console.log(`Server is running on port number: ${PORT_NUMBER}`)
+app.listen(process.env.PORT_NUMBER,()=>{
+    console.log(`Server is running on port number: ${process.env.PORT_NUMBER}`)
 })
 
 

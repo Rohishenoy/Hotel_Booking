@@ -1,9 +1,9 @@
 import admin_model from "../Models/admin_model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-
-const SECRET_KEY = "mernstack";
-
+import { configDotenv } from "dotenv";
+// const SECRET_KEY = "mernstack";
+configDotenv()
 export const InsertAdmin = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -41,7 +41,7 @@ export const Login = async (req, res) => {
 
         const token = jwt.sign(
             { id: admin._id },
-            SECRET_KEY
+            process.env.SECRET_KEY
         ); 
         console.log(" admintoken generated", token);
         res.status(200).json({success: true,message: "login successfully",token
