@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-
+import { host } from "../Context/Host";
 export default function AddLocation() {
 
 const [location, setLocation] = useState({
@@ -15,7 +15,7 @@ setLocation({...location,[e.target.name]: e.target.value});
 
 const handlesubmit = () => {
 console.log("location form data", location);
-axios.post("http://localhost:7009/Location/AddLocation",location)
+axios.post(`${host}/Location/AddLocation`,location)
 .then((res) => {
 console.log(res);
 alert("Location added successfully");

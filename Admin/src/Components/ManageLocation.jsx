@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import Pagination from '@mui/material/Pagination';
+import { host } from '../Context/Host';
 
 export default function ManageLocation() {
 
@@ -14,7 +15,7 @@ export default function ManageLocation() {
 
     const fetchlocation = () => {
 
-        axios.get('http://localhost:7009/Location/ViewLocation',{params: {page: currentPages,limit: limit}})
+        axios.get(`${host}/Location/ViewLocation`,{params: {page: currentPages,limit: limit}})
         .then((res) => {
             console.log("Server Response : ", res)
             setAlllocation(res.data.alllocation)
@@ -34,7 +35,7 @@ export default function ManageLocation() {
 
     const HandleDelete = (locationid) => {
         console.log("delete location id", locationid)
-        axios.delete(`http://localhost:7009/Location/DeleteLocation/${locationid}`)
+        axios.delete(`${host}/Location/DeleteLocation/${locationid}`)
         .then((res) => {
             console.log(res)
             alert("Location deleted")

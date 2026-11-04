@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
+import { host } from '../Context/Host'
 
 export default function AdminDashboard() {
   const [count, setCount] = useState({
@@ -14,7 +15,7 @@ export default function AdminDashboard() {
 
   const fetchcount=async () => {
     try {
-      const res  =await axios.get('http://localhost:7009/User/Count')
+      const res  =await axios.get(`${host}/User/Count`)
       console.log('count response',res.data)
       setCount({
         user:res.data.allusers,
@@ -33,7 +34,7 @@ fetchcount()
   useEffect(() => {
     const fetchMonthlyRevenue = async () => {
       try {
-        const response = await axios.get('http://localhost:7009/Payment/MonthlyRevenue')
+        const response = await axios.get(`${host}/Payment/MonthlyRevenue`)
         setMonthlyRevenue(response.data.monthlyRevenue)
       } catch (error) {
         console.error('Unable to fetch monthly revenue', error)
