@@ -18,15 +18,16 @@ const app=express();
 
 const allowedOrigins = [
     'https://hotel-booking-nq3s.vercel.app',
-    'https://hotel-booking-steel-omega.vercel.app'
+    'https://hotel-booking-steel-omega.vercel.app',
+    'https://hotel-booking-git-main-mernproject.vercel.app'
 ]
 
-app.use(cors())
-// app.use(cors({
-//     origin: allowedOrigins,
-//     methods: ['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'],
-//     allowedHeaders: ['Content-Type','Authorization','auth-token']
-// }))
+// app.use(cors())
+app.use(cors({
+    origin: allowedOrigins,
+    methods: ['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization','auth-token']
+}))
 app.use(express.json())
 app.get('/',(_req,res)=>{
     res.status(200).json({success:true,message:"Hotel booking API is running"})
