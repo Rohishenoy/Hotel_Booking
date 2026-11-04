@@ -61,6 +61,35 @@ export const ViewRoom = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 5;
         const skip = (page - 1) * limit;
+        const { date } = req.query;
+
+        let occupiedTodayRoomIds = new Set();
+        if (date) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Date must use YYYY-MM-DD format"
+                });
+            }
+
+            const dayStart = new Date(`${date}T00:00:00.000Z`);
+            if (Number.isNaN(dayStart.getTime()) || dayStart.toISOString().slice(0, 10) !== date) {
+                return res.status(400).json({
+                    success: false,
+                    message: "A valid date is required"
+                });
+            }
+            const nextDay = new Date(dayStart);
+            nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+            const todaysBookings = await bookingmodel.find({
+                bookingStatus: { $in: ["pending", "approved"] },
+                arrival: { $lt: nextDay },
+                departure: { $gt: dayStart }
+            }).select("room");
+            occupiedTodayRoomIds = new Set(
+                todaysBookings.map((booking) => booking.room?.toString())
+            );
+        }
 
         const [rooms, totalroom] = await Promise.all([
             roommodel
@@ -75,7 +104,12 @@ export const ViewRoom = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            allroom: rooms,
+            allroom: rooms.map((room) => ({
+                ...room.toObject(),
+                occupiedToday:
+                    room.status === "booked" ||
+                    occupiedTodayRoomIds.has(room._id.toString())
+            })),
             currentpage: page,
             totalroom,
             totalpages,

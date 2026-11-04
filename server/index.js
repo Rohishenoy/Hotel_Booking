@@ -21,11 +21,12 @@ const allowedOrigins = [
     'https://hotel-booking-steel-omega.vercel.app'
 ]
 
-app.use(cors({
-    origin: allowedOrigins,
-    methods: ['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'],
-    allowedHeaders: ['Content-Type','Authorization','auth-token']
-}))
+app.use(cors())
+// app.use(cors({
+//     origin: allowedOrigins,
+//     methods: ['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'],
+//     allowedHeaders: ['Content-Type','Authorization','auth-token']
+// }))
 app.use(express.json())
 app.get('/',(_req,res)=>{
     res.status(200).json({success:true,message:"Hotel booking API is running"})

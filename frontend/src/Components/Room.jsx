@@ -7,12 +7,17 @@ import {
   CardMedia,
   Chip,
   Container,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Typography
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { host } from "../Context/Host";
 
 const fallbackImage = "/images/room1.jpg";
+const today = new Date().toLocaleDateString("en-CA");
 
 const getRoomImage = (room) => {
   if (room.image) {
@@ -39,8 +44,17 @@ const getRoomStatus = (status) => {
 export default function Room() {
   const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
+  const [selectedHotelId, setSelectedHotelId] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const hotels = [...new Map(
+    rooms
+      .filter((room) => room.hotel?._id && room.hotel?.hotelname)
+      .map((room) => [room.hotel._id, room.hotel.hotelname])
+  )].map(([id, name]) => ({ id, name }));
+  const filteredRooms = selectedHotelId === "all"
+    ? rooms
+    : rooms.filter((room) => room.hotel?._id === selectedHotelId);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,7 +65,7 @@ export default function Room() {
 
       try {
         const firstResponse = await axios.get(`${host}/Room/ViewRoom`, {
-          params: { page: 1, limit: 100 }
+          params: { page: 1, limit: 100, date: today }
         });
         if (!firstResponse.data.success) {
           throw new Error(firstResponse.data.message || "Unable to load rooms");
@@ -62,7 +76,7 @@ export default function Room() {
         const remainingPages = await Promise.all(
           Array.from({ length: Math.max(0, totalPages - 1) }, (_, index) =>
             axios.get(`${host}/Room/ViewRoom`, {
-              params: { page: index + 2, limit: 100 }
+              params: { page: index + 2, limit: 100, date: today }
             })
           )
         );
@@ -99,6 +113,7 @@ export default function Room() {
     navigate("/RoomAvailability", {
       state: {
         ...room,
+        status: room.occupiedToday ? "booked" : room.status,
         title: room.roomtype,
         desc: room.description || "A comfortable room with thoughtful amenities.",
         roomNumbers: [room.roomnumber],
@@ -118,6 +133,26 @@ export default function Room() {
       </section>
 
       <Container maxWidth="lg" className="rooms-container">
+        {!loading && !error && rooms.length > 0 && (
+          <FormControl size="small" sx={{ minWidth: 240, mb: 3 }}>
+            <InputLabel id="room-hotel-filter-label">Filter by hotel</InputLabel>
+            <Select
+              labelId="room-hotel-filter-label"
+              id="room-hotel-filter"
+              value={selectedHotelId}
+              label="Filter by hotel"
+              onChange={(event) => setSelectedHotelId(event.target.value)}
+            >
+              <MenuItem value="all">All hotels</MenuItem>
+              {hotels.map((hotel) => (
+                <MenuItem key={hotel.id} value={hotel.id}>
+                  {hotel.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+
         {loading && (
           <div className="room-list-message" role="status">Loading room availability…</div>
         )}
@@ -135,10 +170,12 @@ export default function Room() {
           </div>
         )}
 
-        {!loading && !error && rooms.length > 0 && (
+        {!loading && !error && filteredRooms.length > 0 && (
           <div className="room-grid">
-            {rooms.map((room, index) => {
-              const status = getRoomStatus(room.status);
+            {filteredRooms.map((room, index) => {
+              const status = getRoomStatus(
+                room.occupiedToday ? "booked" : room.status
+              );
               return (
                 <div className="room-grid__item" key={room._id}>
                   <Card className="room-card" style={{ "--card-order": index % 12 }}>
@@ -190,6 +227,11 @@ export default function Room() {
                 </div>
               );
             })}
+          </div>
+        )}
+        {!loading && !error && rooms.length > 0 && filteredRooms.length === 0 && (
+          <div className="room-list-message">
+            No rooms are listed for this hotel.
           </div>
         )}
       </Container>
