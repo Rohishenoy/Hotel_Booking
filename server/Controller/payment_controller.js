@@ -1,12 +1,9 @@
 
 import paymentmodel from "../Models/payment_model.js";
 import bookingmodel from "../Models/booking_model.js";
-import roommodel from "../Models/room_model.js";
 import mongoose from "mongoose";
 
 export const ConfirmPayment = async (req, res) => {
-    let approvedBookingId;
-
     try {
 
         const {
@@ -56,12 +53,12 @@ export const ConfirmPayment = async (req, res) => {
             });
         }
 
-        if (booking.bookingStatus !== "pending") {
+        if (booking.bookingStatus !== "approved") {
             return res.status(409).json({
                 success: false,
                 code: "BOOKING_NOT_PAYABLE",
-                message: booking.bookingStatus === "approved"
-                    ? "This booking has already been confirmed."
+                message: booking.bookingStatus === "pending"
+                    ? "Payment is available after the hotel approves this booking."
                     : "This booking is no longer active and cannot be paid."
             });
         }
@@ -73,37 +70,6 @@ export const ConfirmPayment = async (req, res) => {
             });
         }
 
-        if (booking.room) {
-            const reservedRoom = await roommodel.exists({
-                _id: booking.room,
-                status: "booked",
-                activeBooking: booking._id
-            });
-
-            if (!reservedRoom) {
-                return res.status(409).json({
-                    success: false,
-                    code: "ROOM_RESERVATION_LOST",
-                    message: "This room is no longer reserved for the booking. Please contact the hotel."
-                });
-            }
-        }
-
-        const updatedBooking = await bookingmodel.findOneAndUpdate(
-            { _id: bookingId, user: userId, bookingStatus: "pending" },
-            { $set: { bookingStatus: "approved" } },
-            { new: true }
-        );
-
-        if (!updatedBooking) {
-            return res.status(409).json({
-                success: false,
-                code: "BOOKING_STATUS_CHANGED",
-                message: "This booking changed while payment was being processed. Refresh your bookings."
-            });
-        }
-        approvedBookingId = updatedBooking._id;
-
         const payment = new paymentmodel({
             booking: bookingId,
             user: userId,
@@ -112,33 +78,20 @@ export const ConfirmPayment = async (req, res) => {
             paymentStatus: paymentMethod === "COD" ? "pending" : "paid",
             transactionId: transactionId || ""
         });
-
         const savedPayment = await payment.save();
-        approvedBookingId = null;
 
         console.log("Payment saved:", savedPayment);
 
         return res.status(200).json({
             success: true,
-            message: "Payment successful and booking approved",
+            message: "Payment recorded successfully",
             payment: savedPayment,
-            booking: updatedBooking
+            booking
         });
 
     } catch (error) {
 
         console.log("PAYMENT ERROR:", error);
-
-        if (approvedBookingId) {
-            try {
-                await bookingmodel.updateOne(
-                    { _id: approvedBookingId, bookingStatus: "approved" },
-                    { $set: { bookingStatus: "pending" } }
-                );
-            } catch (rollbackError) {
-                console.error("Failed to restore booking status after payment error:", rollbackError);
-            }
-        }
 
         return res.status(500).json({
             success: false,

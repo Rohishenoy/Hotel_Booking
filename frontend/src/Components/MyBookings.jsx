@@ -146,9 +146,6 @@ export default function MyBookings() {
                   {booking.room?.roomnumber && (
                     <Typography className="my-bookings-room" color="text.secondary">
                       Room {booking.room.roomnumber} · {booking.room.roomtype}
-                      {["pending", "approved"].includes(booking.bookingStatus) && booking.room.status === "booked"
-                        ? " · Occupied / Booked"
-                        : ""}
                     </Typography>
                   )}
                 </div>
@@ -187,13 +184,21 @@ export default function MyBookings() {
                   <strong>₹{booking.totalAmount}</strong>
                 </div>
               {booking.bookingStatus === "approved" && booking.hotel?._id && (
-                <Button
-                  className="my-bookings-review"
-                  variant="contained"
-                  onClick={() => navigate(`/Review?hotelId=${booking.hotel._id}&hotelName=${encodeURIComponent(booking.hotel.hotelname || "")}`)}
-                >
-                  Write a review
-                </Button>
+                <>
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate("/Payment", { state: booking })}
+                  >
+                    Continue to payment
+                  </Button>
+                  <Button
+                    className="my-bookings-review"
+                    variant="outlined"
+                    onClick={() => navigate(`/Review?hotelId=${booking.hotel._id}&hotelName=${encodeURIComponent(booking.hotel.hotelname || "")}`)}
+                  >
+                    Write a review
+                  </Button>
+                </>
               )}
               </div>
             </CardContent>

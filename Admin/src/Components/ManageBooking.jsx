@@ -193,7 +193,7 @@ export default function ManageBooking() {
 
                                 <TableCell>
                                     {booking.room?.roomnumber
-                                        ? `#${booking.room.roomnumber} · ${booking.room.status === "booked" ? "Occupied / Booked" : "Available"}`
+                                        ? `#${booking.room.roomnumber}`
                                         : "—"}
                                 </TableCell>
 
@@ -227,6 +227,20 @@ export default function ManageBooking() {
                                 </TableCell>
 
                                 <TableCell>
+
+                                    {booking.bookingStatus === "pending" && (
+                                        <Button
+                                            color="success"
+                                            variant="contained"
+                                            size="small"
+                                            onClick={() =>
+                                                updateBookingStatus(booking._id, "approved")
+                                            }
+                                            sx={{ mr: 1 }}
+                                        >
+                                            Approve
+                                        </Button>
+                                    )}
 
                                     <Button
                                         color="error"

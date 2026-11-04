@@ -35,16 +35,24 @@ export default function HotelDetails() {
   const [error, setError] = useState("");
   const [bookingError, setBookingError] = useState("");
   const [bookingInProgress, setBookingInProgress] = useState(false);
+  const hasStayDates = Boolean(bookingData?.arrival && bookingData?.departure);
 
-  const availableRooms = rooms.filter((room) => room.status === "available");
+  const isRoomAvailable = (room) =>
+    room.availableForStay ?? (hasStayDates && room.status === "available");
+  const availableRooms = rooms.filter(isRoomAvailable);
 
   const refreshRooms = useCallback(async () => {
-    const response = await axios.get(`${host}/Room/ViewRoomByHotel/${id}`);
+    const response = await axios.get(`${host}/Room/ViewRoomByHotel/${id}`, {
+      params: {
+        arrival: bookingData?.arrival,
+        departure: bookingData?.departure
+      }
+    });
     if (!response.data.success) {
       throw new Error(response.data.message || "Unable to refresh room availability");
     }
     setRooms(response.data.rooms || []);
-  }, [id]);
+  }, [bookingData?.arrival, bookingData?.departure, id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,7 +64,12 @@ export default function HotelDetails() {
       try {
         const [hotelResponse, roomResponse] = await Promise.all([
           axios.get(`${host}/Hotel/GetHotelById/${id}`),
-          axios.get(`${host}/Room/ViewRoomByHotel/${id}`)
+          axios.get(`${host}/Room/ViewRoomByHotel/${id}`, {
+            params: {
+              arrival: bookingData?.arrival,
+              departure: bookingData?.departure
+            }
+          })
         ]);
 
         if (!hotelResponse.data.success) {
@@ -88,7 +101,7 @@ export default function HotelDetails() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [bookingData?.arrival, bookingData?.departure, id]);
 
   useEffect(() => {
     const refreshAvailability = () => {
@@ -153,11 +166,14 @@ export default function HotelDetails() {
       console.error("Booking error:", requestError);
       const responseMessage = requestError.response?.data?.message;
       setBookingError(responseMessage || requestError.message || "Booking failed. Please try again.");
-      if (requestError.response?.status === 409) {
+      if (
+        requestError.response?.data?.code === "ROOM_ALREADY_BOOKED" ||
+        requestError.response?.data?.code === "ROOM_UNAVAILABLE"
+      ) {
         setRooms((currentRooms) =>
           currentRooms.map((currentRoom) =>
             currentRoom._id === room._id
-              ? { ...currentRoom, status: requestError.response?.data?.roomStatus || "booked" }
+              ? { ...currentRoom, availableForStay: false }
               : currentRoom
           )
         );
@@ -262,7 +278,14 @@ export default function HotelDetails() {
               {rooms.length > 0 ? (
                 <div className="hotel-detail-room-grid">
                   {rooms.map((room, index) => {
-                    const isAvailable = room.status === "available";
+                    const isAvailable = isRoomAvailable(room);
+                    const availabilityLabel = isAvailable
+                      ? "Available for selected dates"
+                      : !hasStayDates
+                        ? "Search dates to check availability"
+                        : room.status === "inactive"
+                        ? "Unavailable"
+                        : "Already reserved for selected dates";
                     return (
                       <article
                         className="hotel-detail-room-card"
@@ -282,7 +305,7 @@ export default function HotelDetails() {
                             }}
                           />
                           <span className={`hotel-detail-room-card__status${isAvailable ? " is-available" : ""}`}>
-                            {isAvailable ? "Available" : room.status === "booked" ? "Occupied · Booked" : "Unavailable"}
+                            {availabilityLabel}
                           </span>
                         </div>
                         <div className="hotel-detail-room-card__body">
@@ -302,10 +325,10 @@ export default function HotelDetails() {
                             <button
                               className="hotel-action"
                               type="button"
-                              disabled={!isAvailable || bookingInProgress}
+                              disabled={!isAvailable || bookingInProgress || !hasStayDates}
                               onClick={() => bookRoom(room)}
                             >
-                              {!isAvailable ? (room.status === "booked" ? "Occupied / Booked" : "Unavailable") : bookingInProgress ? "Booking…" : "Book room"}
+                              {!isAvailable ? availabilityLabel : bookingInProgress ? "Booking…" : "Book room"}
                               {isAvailable && !bookingInProgress && <span aria-hidden="true">→</span>}
                             </button>
                           </div>
@@ -324,7 +347,11 @@ export default function HotelDetails() {
               )}
               {bookingError && <p className="hotel-detail-booking-error" role="alert">{bookingError}</p>}
               {!loading && rooms.length > 0 && availableRooms.length === 0 && (
-                <p className="hotel-detail-no-availability">No rooms are available at this hotel right now.</p>
+                <p className="hotel-detail-no-availability">
+                  {hasStayDates
+                    ? "No rooms are available at this hotel for the selected dates."
+                    : "Search for arrival and departure dates to check room availability."}
+                </p>
               )}
             </section>
           </>

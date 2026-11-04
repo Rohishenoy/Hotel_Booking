@@ -55,6 +55,11 @@ export default function Payment() {
 
 const handlePayment = async () => {
 
+    if (booking?.bookingStatus !== "approved") {
+        alert("Payment is available only after the hotel approves your booking.");
+        return;
+    }
+
     if (!method) {
         alert("Please select payment method");
         return;
@@ -159,6 +164,27 @@ const handlePayment = async () => {
             }}
           >
             Go to Home
+          </Button>
+        </Paper>
+      </Container>
+    );
+  }
+
+  if (booking.bookingStatus !== "approved") {
+    return (
+      <Container className="payment-page" sx={{ py: 8 }}>
+        <Paper
+          elevation={8}
+          sx={{ maxWidth: 450, mx: "auto", p: 5, textAlign: "center", borderRadius: 4 }}
+        >
+          <Typography variant="h5" fontWeight="bold" color="#8B5E3C" mb={2}>
+            Approval required
+          </Typography>
+          <Typography mb={3}>
+            You can pay after the hotel approves your booking request.
+          </Typography>
+          <Button variant="contained" onClick={() => navigate("/MyBookings")}>
+            Check booking status
           </Button>
         </Paper>
       </Container>

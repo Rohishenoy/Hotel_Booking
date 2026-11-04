@@ -99,10 +99,49 @@ export const ViewRoomByHotel = async (req, res) => {
     try {
 
         const { hotel } = req.params;
+        const { arrival, departure } = req.query;
 
         const rooms = await roommodel
             .find({ hotel })
             .populate("hotel");
+
+        if (arrival || departure) {
+            const arrivalDate = new Date(arrival);
+            const departureDate = new Date(departure);
+
+            if (
+                !arrival ||
+                !departure ||
+                Number.isNaN(arrivalDate.getTime()) ||
+                Number.isNaN(departureDate.getTime()) ||
+                departureDate <= arrivalDate
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Valid arrival and departure dates are required"
+                });
+            }
+
+            const conflictingBookings = await bookingmodel.find({
+                hotel,
+                bookingStatus: { $in: ["pending", "approved"] },
+                arrival: { $lt: departureDate },
+                departure: { $gt: arrivalDate }
+            }).select("room");
+            const unavailableRoomIds = new Set(
+                conflictingBookings.map((booking) => booking.room?.toString())
+            );
+
+            return res.status(200).json({
+                success: true,
+                rooms: rooms.map((room) => ({
+                    ...room.toObject(),
+                    availableForStay:
+                        room.status !== "inactive" &&
+                        !unavailableRoomIds.has(room._id.toString())
+                }))
+            });
+        }
 
         return res.status(200).json({
             success: true,

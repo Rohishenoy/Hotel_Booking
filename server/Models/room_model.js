@@ -9,7 +9,9 @@ const roomschema = new mongoose.Schema({
     description:{type:String},
     image:{type:String},
     status:{type: String,enum: ["available", "booked", "inactive"],default: "available"},
-    activeBooking:{type:mongoose.Schema.Types.ObjectId,ref:"Booking"}
+    activeBooking:{type:mongoose.Schema.Types.ObjectId,ref:"Booking"},
+    availabilityLock:{type:String},
+    availabilityLockAt:{type:Date}
 });
 
 export default mongoose.model("Room", roomschema);

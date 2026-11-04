@@ -4,10 +4,48 @@ import roommodel from "../Models/room_model.js";
 import hotelmodel from "../Models/hotel_model.js";
 import mongoose from "mongoose";
 
+const activeBookingStatuses = ["pending", "approved"];
+const availabilityLockLeaseMs = 120000;
+
+const acquireRoomAvailabilityLock = (roomId, hotel, lockId) => {
+    const staleLockBefore = new Date(Date.now() - availabilityLockLeaseMs);
+
+    return roommodel.findOneAndUpdate(
+        {
+            _id: roomId,
+            hotel,
+            status: { $ne: "inactive" },
+            $or: [
+                { availabilityLock: { $exists: false } },
+                { availabilityLock: null },
+                { availabilityLockAt: { $lt: staleLockBefore } }
+            ]
+        },
+        {
+            $set: {
+                availabilityLock: lockId,
+                availabilityLockAt: new Date()
+            }
+        },
+        { new: true }
+    );
+};
+
+const releaseRoomAvailabilityLock = async (roomId, lockId) => {
+    try {
+        await roommodel.updateOne(
+            { _id: roomId, availabilityLock: lockId },
+            { $unset: { availabilityLock: 1, availabilityLockAt: 1 } }
+        );
+    } catch (error) {
+        console.error("Failed to release room availability lock:", error);
+    }
+};
+
 // ADD BOOKING
 export const AddBooking = async (req, res) => {
-    let reservedRoomId;
-    let reservedBookingId;
+    let lockedRoomId;
+    let lockId;
 
     try {
         const {
@@ -123,15 +161,12 @@ export const AddBooking = async (req, res) => {
             });
         }
 
-        if (selectedRoom.status !== "available") {
-            const isOccupied = selectedRoom.status === "booked";
+        if (selectedRoom.status === "inactive") {
             return res.status(409).json({
                 success: false,
-                code: isOccupied ? "ROOM_ALREADY_BOOKED" : "ROOM_UNAVAILABLE",
+                code: "ROOM_UNAVAILABLE",
                 roomStatus: selectedRoom.status,
-                message: isOccupied
-                    ? `Room ${selectedRoom.roomnumber} has already been booked and is now occupied. Please choose another room.`
-                    : `Room ${selectedRoom.roomnumber} is currently unavailable. Please choose another room.`
+                message: `Room ${selectedRoom.roomnumber} is currently unavailable. Please choose another room.`
             });
         }
 
@@ -158,20 +193,9 @@ export const AddBooking = async (req, res) => {
             totalAmount: totalAmount,
             bookingStatus: "pending"
         });
-        reservedBookingId = booking._id;
-
-        const reservedRoom = await roommodel.findOneAndUpdate(
-            {
-                _id: roomId,
-                hotel,
-                status: "available",
-                activeBooking: { $in: [null] }
-            },
-            { $set: { status: "booked", activeBooking: booking._id } },
-            { new: true }
-        );
-
-        if (!reservedRoom) {
+        lockId = new mongoose.Types.ObjectId().toString();
+        const lockedRoom = await acquireRoomAvailabilityLock(roomId, hotel, lockId);
+        if (!lockedRoom) {
             const currentRoom = await roommodel.findOne({ _id: roomId, hotel });
             if (!currentRoom) {
                 return res.status(404).json({
@@ -181,26 +205,38 @@ export const AddBooking = async (req, res) => {
                 });
             }
 
-            const isOccupied = currentRoom.status === "booked";
             return res.status(409).json({
                 success: false,
-                code: isOccupied ? "ROOM_ALREADY_BOOKED" : "ROOM_UNAVAILABLE",
+                code: currentRoom.status === "inactive" ? "ROOM_UNAVAILABLE" : "ROOM_AVAILABILITY_CHECK_IN_PROGRESS",
                 roomStatus: currentRoom.status,
-                message: isOccupied
-                    ? `Room ${currentRoom.roomnumber} has already been booked and is now occupied. Please choose another room.`
-                    : `Room ${currentRoom.roomnumber} is currently unavailable. Please choose another room.`
+                message: currentRoom.status === "inactive"
+                    ? `Room ${currentRoom.roomnumber} is currently unavailable. Please choose another room.`
+                    : "Room availability is being checked. Please try again."
             });
         }
 
-        reservedRoomId = reservedRoom._id;
+        lockedRoomId = lockedRoom._id;
+
+        const conflictingBooking = await bookingmodel.findOne({
+            hotel,
+            room: roomId,
+            bookingStatus: { $in: activeBookingStatuses },
+            arrival: { $lt: departureDate },
+            departure: { $gt: arrivalDate }
+        });
+        if (conflictingBooking) {
+            return res.status(409).json({
+                success: false,
+                code: "ROOM_ALREADY_BOOKED",
+                message: `Room ${selectedRoom.roomnumber} is already reserved for some or all of these dates. Please choose another room or dates.`
+            });
+        }
 
         const savedBooking = await booking.save();
-        reservedRoomId = null;
-        reservedBookingId = null;
 
         return res.status(201).json({
             success: true,
-            message: "Room booked successfully",
+            message: "Booking request submitted and pending hotel approval",
             booking: savedBooking
         });
 
@@ -208,17 +244,6 @@ export const AddBooking = async (req, res) => {
     } catch (error) {
 
         console.log(error);
-
-        if (reservedRoomId && reservedBookingId) {
-            try {
-                await roommodel.updateOne(
-                    { _id: reservedRoomId, status: "booked", activeBooking: reservedBookingId },
-                    { $set: { status: "available" }, $unset: { activeBooking: 1 } }
-                );
-            } catch (releaseError) {
-                console.error("Failed to release room after booking error:", releaseError);
-            }
-        }
 
         return res.status(500).json({
 
@@ -230,6 +255,10 @@ export const AddBooking = async (req, res) => {
 
         });
 
+    } finally {
+        if (lockedRoomId && lockId) {
+            await releaseRoomAvailabilityLock(lockedRoomId, lockId);
+        }
     }
 
 };
@@ -311,24 +340,6 @@ export const DeleteBooking = async (req, res) => {
             });
         }
 
-        if (deletedBooking.room) {
-            const remainingActiveBookings = await bookingmodel.exists({
-                room: deletedBooking.room,
-                bookingStatus: { $in: ["pending", "approved"] }
-            });
-
-            if (!remainingActiveBookings) {
-                await roommodel.updateOne(
-                    {
-                        _id: deletedBooking.room,
-                        status: "booked",
-                        activeBooking: deletedBooking._id
-                    },
-                    { $set: { status: "available" }, $unset: { activeBooking: 1 } }
-                );
-            }
-        }
-
         return res.status(200).json({
             success: true,
             message: "Booking deleted successfully"
@@ -344,8 +355,8 @@ export const DeleteBooking = async (req, res) => {
 };
 
 export const UpdateBookingStatus = async (req, res) => {
-    let claimedRoomId;
-    let claimedBookingId;
+    let lockedRoomId;
+    let lockId;
 
     try {
         const { bid } = req.params;
@@ -368,34 +379,39 @@ export const UpdateBookingStatus = async (req, res) => {
             });
         }
 
-        const activeStatuses = ["pending", "approved"];
-        const wasActive = activeStatuses.includes(booking.bookingStatus);
-        const willBeActive = activeStatuses.includes(bookingStatus);
+        const willBeActive = activeBookingStatuses.includes(bookingStatus);
+        const mustCheckAvailability =
+            willBeActive &&
+            (bookingStatus === "approved" || !activeBookingStatuses.includes(booking.bookingStatus));
 
-        if (booking.room && willBeActive && !wasActive) {
-            const room = await roommodel.findOneAndUpdate(
-                {
-                    _id: booking.room,
-                    status: "available",
-                    activeBooking: { $in: [null] }
-                },
-                { $set: { status: "booked", activeBooking: booking._id } },
-                { new: true }
-            );
+        if (mustCheckAvailability && booking.room) {
+            lockId = new mongoose.Types.ObjectId().toString();
+            const room = await acquireRoomAvailabilityLock(booking.room, booking.hotel, lockId);
 
             if (!room) {
-                const currentRoom = await roommodel.findById(booking.room);
                 return res.status(409).json({
                     success: false,
-                    code: currentRoom?.status === "booked" ? "ROOM_ALREADY_BOOKED" : "ROOM_UNAVAILABLE",
-                    roomStatus: currentRoom?.status,
-                    message: currentRoom?.status === "booked"
-                        ? "This room is already occupied by another booking."
-                        : "This room is unavailable and the booking cannot be reactivated."
+                    code: "ROOM_UNAVAILABLE",
+                    message: "The room is unavailable or another availability check is in progress."
                 });
             }
-            claimedRoomId = room._id;
-            claimedBookingId = booking._id;
+            lockedRoomId = room._id;
+
+            const conflictingBooking = await bookingmodel.findOne({
+                _id: { $ne: booking._id },
+                hotel: booking.hotel,
+                room: booking.room,
+                bookingStatus: { $in: activeBookingStatuses },
+                arrival: { $lt: booking.departure },
+                departure: { $gt: booking.arrival }
+            });
+            if (conflictingBooking) {
+                return res.status(409).json({
+                    success: false,
+                    code: "ROOM_ALREADY_BOOKED",
+                    message: "Another pending or approved booking already reserves this room for overlapping dates."
+                });
+            }
         }
 
         const updatedBooking = await bookingmodel.findOneAndUpdate(
@@ -405,45 +421,11 @@ export const UpdateBookingStatus = async (req, res) => {
         );
 
         if (!updatedBooking) {
-            if (claimedRoomId && claimedBookingId) {
-                await roommodel.updateOne(
-                    {
-                        _id: claimedRoomId,
-                        status: "booked",
-                        activeBooking: claimedBookingId
-                    },
-                    { $set: { status: "available" }, $unset: { activeBooking: 1 } }
-                );
-                claimedRoomId = null;
-                claimedBookingId = null;
-            }
-
             return res.status(409).json({
                 success: false,
                 code: "BOOKING_STATUS_CHANGED",
                 message: "This booking changed while you were updating it. Refresh and try again."
             });
-        }
-        claimedRoomId = null;
-        claimedBookingId = null;
-
-        if (booking.room && !willBeActive) {
-            const remainingActiveBookings = await bookingmodel.exists({
-                _id: { $ne: booking._id },
-                room: booking.room,
-                bookingStatus: { $in: activeStatuses }
-            });
-
-            if (!remainingActiveBookings) {
-                await roommodel.updateOne(
-                    {
-                        _id: booking.room,
-                        status: "booked",
-                        activeBooking: booking._id
-                    },
-                    { $set: { status: "available" }, $unset: { activeBooking: 1 } }
-                );
-            }
         }
 
         return res.status(200).json({
@@ -453,24 +435,14 @@ export const UpdateBookingStatus = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
-        if (claimedRoomId && claimedBookingId) {
-            try {
-                await roommodel.updateOne(
-                    {
-                        _id: claimedRoomId,
-                        status: "booked",
-                        activeBooking: claimedBookingId
-                    },
-                    { $set: { status: "available" }, $unset: { activeBooking: 1 } }
-                );
-            } catch (releaseError) {
-                console.error("Failed to release room after booking status error:", releaseError);
-            }
-        }
         return res.status(500).json({
             success: false,
             message: "Server error",
             error: error.message
         });
+    } finally {
+        if (lockedRoomId && lockId) {
+            await releaseRoomAvailabilityLock(lockedRoomId, lockId);
+        }
     }
 };

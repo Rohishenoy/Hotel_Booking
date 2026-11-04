@@ -247,21 +247,32 @@ export default function Booking() {
  <Typography sx={{ opacity: 0.9  }} >Total Amount</Typography>
               <Typography variant="h5"fontWeight="bold">₹{booking.totalAmount}</Typography>
             </Box>
-            <Typography sx={{fontSize: "14px", opacity: 0.9}} >Pay Now </Typography>
+            <Typography sx={{fontSize: "14px", opacity: 0.9}} >{bookingStatus === "approved" ? "Ready to pay" : "Approval required"}</Typography>
           </Box>
 
           {/* Buttons */}
 
-          <Button fullWidth variant="contained" onClick={() =>navigate("/Payment",{ state: booking})}
-          sx={{mt: 4,py: 1.5,borderRadius: 2,fontSize: "16px",fontWeight: "bold",backgroundColor:"#8B5E3C","&:hover":{backgroundColor:"#6F472D"}}}> Continue to Payment
-          </Button>
+          {bookingStatus === "approved" ? (
+            <Button fullWidth variant="contained" onClick={() => navigate("/Payment", { state: booking })}
+              sx={{mt: 4,py: 1.5,borderRadius: 2,fontSize: "16px",fontWeight: "bold",backgroundColor:"#8B5E3C","&:hover":{backgroundColor:"#6F472D"}}}>
+              Continue to Payment
+            </Button>
+          ) : bookingStatus === "pending" ? (
+            <Box sx={{ mt: 3, textAlign: "center" }}>
+              <Typography role="status" sx={{ color: "#8B5E3C" }}>
+                Your room is reserved for these dates while the hotel reviews your request. Payment will be available after approval.
+              </Typography>
+              <Button variant="text" onClick={() => navigate("/MyBookings")} sx={{ mt: 1, color: "#8B5E3C" }}>
+                Track booking status
+              </Button>
+            </Box>
+          ) : null}
           <Button fullWidth variant="outlined"  onClick={() => navigate("/")}
             sx={{ mt: 1.5, py: 1.3, borderRadius: 2, color: "#8B5E3C", borderColor: "#8B5E3C", "&:hover": {  borderColor: "#6F472D",backgroundColor: "#faf7f4"  } }}>
             Back to Home
           </Button>
           <Typography textAlign="center"  sx={{mt: 3,fontSize: "13px",color: "gray" }}>
-            Please check your booking details before
-            continuing to payment.
+            Track your reservation status in My Bookings.
           </Typography>
         </Box>
       </Paper>
